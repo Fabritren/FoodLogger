@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple Logger</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    body { font-family: sans-serif; padding: 1rem; }
+    input, button { font-size: 1rem; margin: 0.3rem 0; }
+    canvas { border: 1px solid #ccc; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  <h1>Logger</h1>
+
+  <label>Date & Time</label><br>
+  <input type="datetime-local" id="dt"><br>
+
+  <label>Text</label><br>
+  <input type="text" id="text" placeholder="Log entry"><br>
+
+  <button onclick="addEntry()">Add</button>
+  <button onclick="exportData()">Export</button>
+  <input type="file" id="importFile" onchange="importData()" />
+
+  <canvas id="plot" width="300" height="200"></canvas>
+
+  <script src="app.js"></script>
+</body>
+</html>
