@@ -145,14 +145,14 @@ function discardEdit() {
 function updateStatus(raw){
   console.log('[updateStatus] called; raw.length =', raw.length);
   if (!raw.length) {
-    statusFooter.innerText = 'No entries';
-    console.log('[updateStatus] set statusFooter to "No entries"');
+    databaseStatus.innerText = 'No entries';
+    console.log('[updateStatus] set databaseStatus to "No entries"');
     return;
   }
   const times = raw.map(r => new Date(r.time));
-  statusFooter.innerText =
+  databaseStatus.innerText =
     `Count: ${raw.length} | First: ${new Date(Math.min(...times)).toLocaleString()} | Last: ${new Date(Math.max(...times)).toLocaleString()}`;
-  console.log('[updateStatus] statusFooter set:', statusFooter.innerText);
+  console.log('[updateStatus] databaseStatus set:', databaseStatus.innerText);
 }
 
 function updateQuickButtons() {
