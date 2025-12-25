@@ -1,4 +1,5 @@
 let processedTable = [];
+let editingKey = null; // global variable
 
 function toggleAdd(){
   console.log('[toggleAdd] called; addSection exists:', !!window.addSection);
@@ -7,21 +8,24 @@ function toggleAdd(){
   console.log('[toggleAdd] after hidden:', addSection.hidden);
 }
 
-function addEntry(){
-  console.log('[addEntry] called');
-  const dt = document.getElementById('dt').value;
-  const text = document.getElementById('text').value;
-  console.log('[addEntry] inputs:', { dt, text });
-  if(!dt || !text) {
-    console.log('[addEntry] missing input; aborting');
-    return;
+function addEntry() {
+  const time = dt.value;
+  const value = text.value.trim();
+  if (!time || !value) return;
+
+  const entry = { time, text: value };
+
+  if (editingKey !== null) {
+    updateRaw(editingKey, entry);
+    editingKey = null;
+    document.querySelector('#panel-add .primary').innerText = 'Save';
+    document.getElementById('discardBtn').hidden = true; // hide discard after update
+  } else {
+    addRaw(entry);
   }
 
-  addRaw({time:dt, text:text});
-  console.log('[addEntry] addRaw called');
-  document.getElementById('text').value='';
+  text.value = '';
   refresh();
-  console.log('[addEntry] refresh triggered');
 }
 
 function buildProcessed(raw) {
@@ -52,14 +56,83 @@ function refresh(){
   });
 }
 
-function updateTable(raw) {
+function updateTable() {
   const tbody = document.querySelector('#dataTable tbody');
   tbody.innerHTML = '';
-  raw.forEach(r => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${new Date(r.time).toLocaleString()}</td><td>${r.text}</td>`;
-    tbody.appendChild(tr);
-  });
+
+  const tx = db.transaction('raw', 'readonly');
+  const store = tx.objectStore('raw');
+  const req = store.openCursor();
+
+  req.onsuccess = e => {
+    const cursor = e.target.result;
+    if (cursor) {
+      const key = cursor.key;
+      const entry = cursor.value;
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${new Date(entry.time).toLocaleString()}</td>
+        <td>${entry.text}</td>
+        <td class="actions">
+          <button title="Edit" onclick="editEntry(${key})">✏️</button>
+          <button title="Delete" onclick="confirmDelete(${key})">🗑️</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+
+      cursor.continue();
+    }
+  };
+  req.onerror = e => console.error('updateTable cursor error', e.target.error);
+}
+
+function confirmDelete(index) {
+  const ok = confirm('Delete this entry? This cannot be undone.');
+  if (!ok) return;
+
+  deleteEntry(index);
+}
+
+function deleteEntry(index) {
+  deleteRaw(index);
+  refresh();
+}
+
+function editEntry(key) {
+  const tx = db.transaction('raw', 'readonly');
+  const store = tx.objectStore('raw');
+  const req = store.get(key);
+
+  req.onsuccess = e => {
+    const entry = e.target.result;
+    if (!entry) return;
+
+    // Store the key of the entry being edited
+    editingKey = key;
+
+    // Open Add panel
+    showPanel('add');
+
+    // Populate input fields
+    dt.value = entry.time.slice(0, 16); // keep format compatible with datetime-local
+    text.value = entry.text;
+
+    // Change Save button text to indicate update
+    document.querySelector('#panel-add .primary').innerText = 'Update';
+    // show discard button
+    document.getElementById('discardBtn').hidden = false;
+  };
+
+  req.onerror = e => console.error('editEntry: error fetching entry', e.target.error);
+}
+
+function discardEdit() {
+  editingKey = null;                    // cancel editing mode
+  text.value = '';                       // clear input
+  dt.value = new Date().toISOString().slice(0,16); // reset to now
+  document.querySelector('#panel-add .primary').innerText = 'Save'; // restore button text
+  document.getElementById('discardBtn').hidden = true; // hide discard button
 }
 
 function updateStatus(raw){

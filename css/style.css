@@ -115,3 +115,11 @@ footer {
   font-size: 1rem;
   box-sizing: border-box;
 }
+
+.secondary {
+  background: #eee;
+  border: 1px solid #ccc;
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  margin-left: 0.3rem;
+}

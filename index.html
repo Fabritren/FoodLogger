@@ -40,6 +40,7 @@
           <tr>
             <th>Date</th>
             <th>Text</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -64,6 +65,7 @@
       >
       <button class="clear-btn" onclick="text.value=''">×</button>
       <button class="primary" onclick="addEntry()">Save</button>
+      <button class="secondary" id="discardBtn" onclick="discardEdit()" hidden>Discard</button>
     </div>
     
     <div class="input-row">

@@ -39,6 +39,32 @@ function addRaw(entry) {
   tx.onerror = e => console.error('addRaw: transaction error', e.target && e.target.error);
 }
 
+function updateRaw(key, entry) {
+  console.log('updateRaw: updating entry', key, entry);
+  const tx = db.transaction('raw', 'readwrite');
+  const store = tx.objectStore('raw');
+  const req = store.put(entry, key); // replaces value at key
+
+  req.onsuccess = () => console.log('updateRaw: updated entry with key', key);
+  req.onerror = () => console.error('updateRaw: error updating entry', req.error);
+
+  tx.oncomplete = () => console.log('updateRaw: transaction complete');
+  tx.onerror = e => console.error('updateRaw: transaction error', e.target && e.target.error);
+}
+
+function deleteRaw(key) {
+  console.log('deleteRaw: deleting entry', key);
+  const tx = db.transaction('raw', 'readwrite');
+  const store = tx.objectStore('raw');
+  const req = store.delete(key);
+
+  req.onsuccess = () => console.log('deleteRaw: deleted entry with key', key);
+  req.onerror = () => console.error('deleteRaw: error deleting entry', req.error);
+
+  tx.oncomplete = () => console.log('deleteRaw: transaction complete');
+  tx.onerror = e => console.error('deleteRaw: transaction error', e.target && e.target.error);
+}
+
 function getAllRaw(cb) {
   console.log('getAllRaw: fetching all entries');
   const tx = db.transaction('raw', 'readonly');
@@ -119,58 +145,5 @@ function clearDB(cb) {
     p.then(() => cb(null)).catch(err => cb(err));
   }
 
-  return p;
-}
-
-/**
- * updateRaw(key, updatesOrFn, cb?) -> Promise
- * - If updatesOrFn is a function, it receives the current record and should return the updated record.
- * - Otherwise, updatesOrFn is treated as a partial object that will be shallow-merged into the existing record.
- * - Resolves with the put result (key) or rejects with an error.
- */
-function updateRaw(key, updatesOrFn, cb) {
-  console.log('updateRaw: updating key', key);
-  const tx = db.transaction('raw', 'readwrite');
-  const store = tx.objectStore('raw');
-  const getReq = store.get(key);
-
-  const p = new Promise((resolve, reject) => {
-    getReq.onsuccess = () => {
-      const current = getReq.result;
-      if (current === undefined) {
-        console.warn('updateRaw: no record found for key', key);
-        reject(new Error('No record found for key ' + key));
-        return;
-      }
-
-      const updated = (typeof updatesOrFn === 'function')
-        ? updatesOrFn(current)
-        : Object.assign({}, current, updatesOrFn);
-
-      console.log('updateRaw: putting updated record for key', key, updated);
-      const putReq = store.put(updated, key);
-
-      putReq.onsuccess = () => {
-        console.log('updateRaw: update successful for key', putReq.result);
-        resolve(putReq.result);
-      };
-      putReq.onerror = () => {
-        console.error('updateRaw: put error', putReq.error);
-        reject(putReq.error);
-      };
-    };
-
-    getReq.onerror = () => {
-      console.error('updateRaw: get error', getReq.error);
-      reject(getReq.error);
-    };
-  });
-
-  tx.oncomplete = () => console.log('updateRaw: transaction complete');
-  tx.onerror = e => console.error('updateRaw: transaction error', e.target && e.target.error);
-
-  if (typeof cb === 'function') {
-    p.then(res => cb(null, res)).catch(err => cb(err));
-  }
   return p;
 }
