@@ -65,6 +65,24 @@ function deleteRaw(key) {
   tx.onerror = e => console.error('deleteRaw: transaction error', e.target && e.target.error);
 }
 
+function getRaw(key, cb) {
+  console.log('getRaw: fetching entry with key', key);
+  const tx = db.transaction('raw', 'readonly');
+  const store = tx.objectStore('raw');
+  const req = store.get(key);
+
+  req.onsuccess = () => {
+    console.log('getRaw: fetched entry', req.result);
+    if (cb) cb(req.result);
+  };
+
+  req.onerror = () => {
+    console.error('getRaw: error', req.error);
+    if (cb) cb(null);
+  };
+}
+
+
 function getAllRaw(cb) {
   console.log('getAllRaw: fetching all entries');
 
@@ -81,12 +99,12 @@ function getAllRaw(cb) {
       });
       cursor.continue();
     } else {
-    console.log('getAllRaw: fetched', results.length, 'entries');
-
+      console.log('getAllRaw: fetched', results.length, 'entries');
+      
       // Sort by date
-    results.sort((a, b) => new Date(a.time) - new Date(b.time));
+      results.sort((a, b) => new Date(a.time) - new Date(b.time));
 
-    cb(results);
+      cb(results);
     }
   };
 }
