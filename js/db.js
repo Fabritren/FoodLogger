@@ -68,11 +68,16 @@ function deleteRaw(key) {
 function getAllRaw(cb) {
   console.log('getAllRaw: fetching all entries');
   const tx = db.transaction('raw', 'readonly');
-  const req = tx.objectStore('raw').getAll();
+  const store = tx.objectStore('raw');
+  const req = store.getAll();
 
   req.onsuccess = () => {
     const results = req.result || [];
     console.log('getAllRaw: fetched', results.length, 'entries');
+
+    // Sort by date ascending
+    results.sort((a, b) => new Date(a.time) - new Date(b.time));
+
     cb(results);
   };
 
@@ -81,6 +86,7 @@ function getAllRaw(cb) {
     cb([]);
   };
 }
+
 
 /**
  * clearRaw(cb?) -> Promise
