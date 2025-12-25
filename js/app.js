@@ -52,7 +52,7 @@ function refresh(){
     console.log('[refresh] drawPlot called with processedTable.length =', processedTable.length);
     updateStatus(raw);
     updateQuickButtons();
-    updateTable(raw);
+    updateTable();
   });
 }
 
@@ -79,17 +79,17 @@ function updateTable() {
         </td>
         <td>${entry.text}</td>
         <td class="actions">
-          <button title="Edit" onclick="editEntry(${entry.id || index})">✏️</button>
-          <button title="Delete" onclick="confirmDelete(${entry.id || index})">🗑️</button>
+          <button title="Edit" onclick="editEntry(${entry.key})">✏️</button>
+          <button title="Delete" onclick="confirmDelete(${entry.key})">🗑️</button>
         </td>
       `;
 
       tbody.appendChild(tr);
-      console.log(`updateTable: added row for key/index`, entry.id || index);
     });
 
-    console.log('updateTable: finished rendering table');
+    console.log('updateTable: finished rendering table with', results.length, 'items');
   });
+}
 }
 
 function confirmDelete(index) {
