@@ -46,11 +46,28 @@ function updateStatus(raw){
     `Count: ${raw.length} | First: ${new Date(Math.min(...times)).toLocaleString()} | Last: ${new Date(Math.max(...times)).toLocaleString()}`;
 }
 
-function updateQuickButtons(){
-  quickButtons.innerHTML='';
-  [...new Set(processedTable.map(e=>e.text))].slice(0,6).forEach(t=>{
-    const b=document.createElement('button');
-    b.innerText=t;
+function updateQuickButtons() {
+  quickButtons.innerHTML = '';
+
+  // Count occurrences
+  const counts = {};
+  processedTable.forEach(e => {
+    counts[e.text] = (counts[e.text] || 0) + 1;
+  });
+
+  // Build sorted list:
+  // 1) Most frequent first
+  // 2) Alphabetical for ties
+  const sorted = Object.keys(counts)
+    .sort((a, b) => {
+      const diff = counts[b] - counts[a];
+      return diff !== 0 ? diff : a.localeCompare(b);
+    });
+
+  // Create buttons for all unique sorted values
+  sorted.forEach(t => {
+    const b = document.createElement('button');
+    b.innerText = t;
     b.onclick = () => {
       const current = text.value.trim();
       text.value = current ? `${current}, ${t}` : t;
