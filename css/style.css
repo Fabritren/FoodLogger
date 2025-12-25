@@ -1,25 +1,102 @@
+:root {
+  --bg: #f6f7f9;
+  --card: #ffffff;
+  --border: #e0e0e0;
+  --accent: #2563eb;
+}
+
 body {
-  font-family: system-ui, sans-serif;
   margin: 0;
-  padding: 0.5rem;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: var(--bg);
 }
-header {
+
+.topbar {
   display: flex;
-  gap: 0.5rem;
+  justify-content: space-between;
+  padding: 0.5rem;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
 }
-button {
+
+.topbar button {
+  font-size: 1.1rem;
+  padding: 0.4rem 0.6rem;
+}
+
+.panels {
+  padding: 0.75rem;
+  max-width: 900px;
+  margin: auto;
+}
+
+.panel {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+}
+
+.panel h2 {
+  margin-top: 0;
+}
+
+input {
+  width: 100%;
+  font-size: 1rem;
+  padding: 0.5rem;
+  margin-bottom: 0.6rem;
+}
+
+.input-row {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.clear-btn {
+  font-size: 1.2rem;
+  width: 2.2rem;
+}
+
+.primary {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 0.6rem;
+  border-radius: 8px;
   font-size: 1rem;
 }
-#addSection {
-  margin: 0.5rem 0;
-  padding: 0.5rem;
-  border: 1px solid #ccc;
+
+.quick-buttons button {
+  margin: 0.25rem;
 }
-#quickButtons button {
-  margin: 0.2rem;
+
+.table-wrap {
+  overflow-x: auto;
 }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 0.4rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+
 footer {
   font-size: 0.85rem;
-  margin-top: 0.5rem;
+  text-align: center;
+  padding: 0.5rem;
   color: #555;
+}
+
+#text {
+  width: 100%;
+  height: 2.4rem;
+  padding: 0.4rem 0.5rem;
+  font-size: 1rem;
+  box-sizing: border-box;
 }
