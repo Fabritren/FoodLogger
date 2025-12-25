@@ -25,6 +25,7 @@ function addEntry() {
   }
 
   textNewEntry.value = '';
+  autoGrow(textNewEntry);
   refresh();
 }
 
@@ -138,6 +139,7 @@ function editEntry(key) {
     // Populate input fields
     dt.value = entry.time.slice(0, 16); // keep format compatible with datetime-local
     textNewEntry.value = entry.text;
+    autoGrow(textNewEntry);
 
     // Change Save button text to indicate update
     document.querySelector('#panel-add .primary').innerText = 'Update';
@@ -151,6 +153,7 @@ function editEntry(key) {
 function discardEdit() {
   editingKey = null;                    // cancel editing mode
   textNewEntry.value = '';                       // clear input
+  autoGrow(textNewEntry);
   dt.value = new Date().toISOString().slice(0,16); // reset to now
   document.querySelector('#panel-add .primary').innerText = 'Save'; // restore button text
   document.getElementById('discardBtn').hidden = true; // hide discard button
@@ -208,6 +211,7 @@ function updateQuickButtons() {
       const current = textNewEntry.value.trim();
       textNewEntry.value = current ? `${current}, ${t}` : t;
       textNewEntry.setSelectionRange(textNewEntry.value.length, textNewEntry.value.length);
+      autoGrow(textNewEntry);
     };
     quickButtons.appendChild(b);
   });
@@ -247,6 +251,11 @@ function importData(input){
   }).catch(err=>{
     console.error('[importData] failed to parse or import file:', err);
   });
+}
+
+function autoGrow(el) {
+  el.style.height = "auto";
+  el.style.height = el.scrollHeight + "px";
 }
 
 openDB().then(()=>{

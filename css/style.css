@@ -124,3 +124,9 @@ footer {
   margin-left: 0.3rem;
 }
 
+#textNewEntry {
+  width: 100%;
+  white-space: pre-wrap;   /* allow wrapping */
+  box-sizing: border-box;
+  font-size: 1rem;
+}

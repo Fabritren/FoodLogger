@@ -58,13 +58,14 @@
 
     <label>Text</label>
     <div class="input-row">
-      <input
-        type="text"
+      <textarea
         id="textNewEntry"
         placeholder="comma separated text"
+        rows="1"
+        oninput="autoGrow(this)"
         onfocus="this.setSelectionRange(this.value.length, this.value.length)"
-      >
-      <button class="clear-btn" onclick="text.value=''">×</button>
+      ></textarea>
+      <button class="clear-btn" onclick="textNewEntry.value='';autoGrow(textNewEntry)">×</button>
       <button class="primary" onclick="addEntry()">Save</button>
       <button class="secondary" id="discardBtn" onclick="discardEdit()" hidden>Discard</button>
     </div>
