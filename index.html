@@ -2,30 +2,37 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <title>Logger Sketch</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Simple Logger</title>
   <link rel="manifest" href="manifest.json">
-  <style>
-    body { font-family: sans-serif; padding: 1rem; }
-    input, button { font-size: 1rem; margin: 0.3rem 0; }
-    canvas { border: 1px solid #ccc; margin-top: 1rem; }
-  </style>
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <h1>Logger</h1>
 
-  <label>Date & Time</label><br>
-  <input type="datetime-local" id="dt"><br>
+<header>
+  <button onclick="exportData()" title="Export">⬇️</button>
+  <label title="Import">⬆️
+    <input type="file" hidden onchange="importData(this)">
+  </label>
+</header>
 
-  <label>Text</label><br>
-  <input type="text" id="text" placeholder="Log entry"><br>
+<main>
+  <button id="toggleAdd" onclick="toggleAdd()">➕ Add entry</button>
 
-  <button onclick="addEntry()">Add</button>
-  <button onclick="exportData()">Export</button>
-  <input type="file" id="importFile" onchange="importData()" />
+  <section id="addSection" hidden>
+    <input type="datetime-local" id="dt">
+    <input type="text" id="text" placeholder="comma separated text">
+    <div id="quickButtons"></div>
+    <button onclick="addEntry()">Save</button>
+  </section>
 
-  <canvas id="plot" width="300" height="200"></canvas>
+  <canvas id="plot" width="340" height="220"></canvas>
+</main>
 
-  <script src="app.js"></script>
+<footer id="status">No entries</footer>
+
+<script src="js/db.js"></script>
+<script src="js/plot.js"></script>
+<script src="js/app.js"></script>
 </body>
 </html>
