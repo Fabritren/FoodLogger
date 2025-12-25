@@ -2,32 +2,74 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Logger Sketch</title>
+  <title>Food Logger</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-<header>
-  <button onclick="exportData()" title="Export">⬇️</button>
-  <button type="button" title="Import" onclick="this.querySelector('input').click()">
-    ⬆️<input type="file" hidden onchange="importData(this)">
-  </button>
+<header class="topbar">
+  <div class="left">
+    <button onclick="exportData()" title="Export">⬇️</button>
+    <button title="Import" onclick="this.querySelector('input').click()">
+      ⬆️<input type="file" hidden onchange="importData(this)">
+    </button>
+  </div>
+  <div class="right">
+    <button onclick="showPanel('plot')">📊</button>
+    <button onclick="showPanel('data')">🗂️</button>
+    <button onclick="showPanel('add')">➕</button>
+  </div>
 </header>
 
-<main>
-  <button id="toggleAdd" onclick="toggleAdd()">➕ Add entry</button>
+<main class="panels">
 
-  <section id="addSection" hidden>
-    <input type="datetime-local" id="dt">
-    <input type="text" id="text" placeholder="comma separated text">
-    <button class="clear-btn" onclick="text.value=''">×</button>
-    <button onclick="addEntry()">Save</button>
-    <div id="quickButtons"></div>
+  <!-- PLOT PANEL -->
+  <section class="panel" id="panel-plot">
+    <h2>Timeline</h2>
+    <canvas id="plot" width="360" height="240"></canvas>
   </section>
-  <br>
-  <canvas id="plot" width="340" height="220"></canvas>
+
+  <!-- DATA PANEL -->
+  <section class="panel" id="panel-data" hidden>
+    <h2>Database</h2>
+    <div class="table-wrap">
+      <table id="dataTable">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Text</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ADD PANEL -->
+  <section class="panel" id="panel-add" hidden>
+    <h2>Add entry</h2>
+
+    <label>Date and time</label>
+    <input type="datetime-local" id="dt">
+
+    <label>Text</label>
+    <div class="input-row">
+      <input
+        type="text"
+        id="text"
+        placeholder="comma separated text"
+        onfocus="this.setSelectionRange(this.value.length, this.value.length)"
+      >
+      <button class="clear-btn" onclick="text.value=''">×</button>
+      <button class="primary" onclick="addEntry()">Save</button>
+    </div>
+
+
+    <div id="quickButtons" class="quick-buttons"></div>
+  </section>
+
 </main>
 
 <footer id="statusFooter">No entries</footer>
@@ -35,5 +77,13 @@
 <script src="js/db.js"></script>
 <script src="js/plot.js"></script>
 <script src="js/app.js"></script>
+
+<script>
+function showPanel(name) {
+  document.querySelectorAll('.panel').forEach(p => p.hidden = true);
+  document.getElementById('panel-' + name).hidden = false;
+}
+</script>
+
 </body>
 </html>
