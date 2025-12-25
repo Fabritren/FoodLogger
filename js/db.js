@@ -91,37 +91,34 @@ function clearRaw(cb) {
  * - Resolves on success, rejects with an error on failure.
  */
 function clearDB(cb) {
-  console.log('clearDB: deleting entire database "logger-db"');
-  if (db) {
-    try {
-      db.close();
-      console.log('clearDB: closed existing DB connection');
-    } catch (e) {
-      console.warn('clearDB: error closing DB (ignored)', e);
-    }
-    db = null;
+  console.log('clearDB: clearing all entries from object store "raw"');
+
+  if (!db) {
+    const err = new Error("DB not initialized");
+    console.error(err);
+    if (cb) cb(err);
+    return Promise.reject(err);
   }
 
-  const req = indexedDB.deleteDatabase('logger-db');
+  const tx = db.transaction('raw', 'readwrite');
+  const store = tx.objectStore('raw');
+  const req = store.clear();
 
   const p = new Promise((resolve, reject) => {
     req.onsuccess = () => {
-      console.log('clearDB: database deleted successfully');
+      console.log('clearDB: all entries cleared successfully');
       resolve();
     };
     req.onerror = () => {
-      console.error('clearDB: delete error', req.error);
+      console.error('clearDB: clear error', req.error);
       reject(req.error);
-    };
-    req.onblocked = () => {
-      console.error('clearDB: delete blocked (open connections exist)');
-      reject(new Error('delete blocked'));
     };
   });
 
   if (typeof cb === 'function') {
     p.then(() => cb(null)).catch(err => cb(err));
   }
+
   return p;
 }
 
