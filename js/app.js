@@ -60,18 +60,15 @@ function updateTable() {
   const tbody = document.querySelector('#dataTable tbody');
   tbody.innerHTML = '';
 
-  const tx = db.transaction('raw', 'readonly');
-  const store = tx.objectStore('raw');
-  const req = store.openCursor();
+  console.log('updateTable: fetching all entries');
 
-  req.onsuccess = e => {
-    const cursor = e.target.result;
-    if (cursor) {
-      const key = cursor.key;
-      const entry = cursor.value;
+  getAllRaw(results => {
+    console.log('updateTable: received', results.length, 'entries');
 
+    results.forEach((entry, index) => {
       const tr = document.createElement('tr');
       const d = new Date(entry.time);
+
       tr.innerHTML = `
         <td>
           ${d.toLocaleDateString()} 
@@ -82,16 +79,17 @@ function updateTable() {
         </td>
         <td>${entry.text}</td>
         <td class="actions">
-          <button title="Edit" onclick="editEntry(${key})">✏️</button>
-          <button title="Delete" onclick="confirmDelete(${key})">🗑️</button>
+          <button title="Edit" onclick="editEntry(${entry.id || index})">✏️</button>
+          <button title="Delete" onclick="confirmDelete(${entry.id || index})">🗑️</button>
         </td>
       `;
-      tbody.appendChild(tr);
 
-      cursor.continue();
-    }
-  };
-  req.onerror = e => console.error('updateTable cursor error', e.target.error);
+      tbody.appendChild(tr);
+      console.log(`updateTable: added row for key/index`, entry.id || index);
+    });
+
+    console.log('updateTable: finished rendering table');
+  });
 }
 
 function confirmDelete(index) {
