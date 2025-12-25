@@ -100,9 +100,12 @@ function getAllRaw(cb) {
       cursor.continue();
     } else {
       console.log('getAllRaw: fetched', results.length, 'entries');
-      
+
       // Sort by date
-      results.sort((a, b) => new Date(a.time) - new Date(b.time));
+      // oldest → newest
+      // results.sort((a, b) => new Date(a.time) - new Date(b.time));
+      // newest → oldest
+      results.sort((a, b) => new Date(b.time) - new Date(a.time));
 
       cb(results);
     }
