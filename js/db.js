@@ -67,23 +67,27 @@ function deleteRaw(key) {
 
 function getAllRaw(cb) {
   console.log('getAllRaw: fetching all entries');
+
   const tx = db.transaction('raw', 'readonly');
   const store = tx.objectStore('raw');
-  const req = store.getAll();
+  const results = [];
 
-  req.onsuccess = () => {
-    const results = req.result || [];
+  store.openCursor().onsuccess = e => {
+    const cursor = e.target.result;
+    if (cursor) {
+      results.push({
+        key: cursor.key,      // IndexedDB key
+        ...cursor.value       // time, text
+      });
+      cursor.continue();
+    } else {
     console.log('getAllRaw: fetched', results.length, 'entries');
 
-    // Sort by date ascending
+      // Sort by date
     results.sort((a, b) => new Date(a.time) - new Date(b.time));
 
     cb(results);
-  };
-
-  req.onerror = () => {
-    console.error('getAllRaw: error', req.error);
-    cb([]);
+    }
   };
 }
 
