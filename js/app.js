@@ -73,6 +73,7 @@ function exportData(){
 function importData(input){
   const f=input.files[0];
   if(!f) return;
+  clearDB(db)
   f.text().then(t=>{
     JSON.parse(t).forEach(e=>addRaw(e));
     refresh();
