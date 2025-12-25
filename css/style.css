@@ -67,8 +67,23 @@ input {
   font-size: 1rem;
 }
 
+.quick-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem; /* spacing between buttons */
+}
+
 .quick-buttons button {
-  margin: 0.25rem;
+  margin: 0.25rem;              /* gap handles spacing now */
+  padding: 0.5rem 0.75rem;   /* larger clickable area without changing text size */
+  min-width: 3rem;         /* prevents very narrow buttons */
+  min-height: 2rem;        /* ensures comfortable vertical tap target */
+  font-size: inherit;        /* do NOT reduce text size */
+  line-height: 1;            /* keeps text vertically centered */
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  cursor: pointer;
 }
 
 .table-wrap {
