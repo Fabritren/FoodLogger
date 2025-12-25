@@ -10,7 +10,9 @@
 <body>
 
 <header>
-  <button onclick="exportData()" title="Export">⬇️</button>
+  <label title="Export">⬇️
+    <input onchange="exportData()">
+  </label>
   <label title="Import">⬆️
     <input type="file" hidden onchange="importData(this)">
   </label>
