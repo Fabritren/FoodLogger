@@ -48,6 +48,17 @@ function refresh(){
     console.log('[refresh] drawPlot called with processedTable.length =', processedTable.length);
     updateStatus(raw);
     updateQuickButtons();
+    updateTable(raw);
+  });
+}
+
+function updateTable(raw) {
+  const tbody = document.querySelector('#dataTable tbody');
+  tbody.innerHTML = '';
+  raw.forEach(r => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${new Date(r.time).toLocaleString()}</td><td>${r.text}</td>`;
+    tbody.appendChild(tr);
   });
 }
 
