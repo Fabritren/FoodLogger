@@ -264,4 +264,6 @@ openDB().then(()=>{
   console.log('[openDB] dt set to', dt.value);
   refresh();
   console.log('[openDB] initial refresh triggered');
+  showPanel('add');
 });
+
