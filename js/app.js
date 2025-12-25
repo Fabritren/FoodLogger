@@ -51,7 +51,10 @@ function updateQuickButtons(){
   [...new Set(processedTable.map(e=>e.text))].slice(0,6).forEach(t=>{
     const b=document.createElement('button');
     b.innerText=t;
-    b.onclick=()=>text.value=t;
+    b.onclick = () => {
+      const current = text.value.trim();
+      text.value = current ? `${current}, ${t}` : t;
+    };
     quickButtons.appendChild(b);
   });
 }
