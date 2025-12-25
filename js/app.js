@@ -37,12 +37,12 @@ function refresh(){
 }
 
 function updateStatus(raw){
-  if(!raw.length){
-    status.innerText='No entries';
+  if (!raw.length) {
+    statusFooter.innerText = 'No entries';
     return;
   }
-  const times = raw.map(r=>new Date(r.time));
-  status.innerText = 
+  const times = raw.map(r => new Date(r.time));
+  statusFooter.innerText =
     `Count: ${raw.length} | First: ${new Date(Math.min(...times)).toLocaleString()} | Last: ${new Date(Math.max(...times)).toLocaleString()}`;
 }
 
