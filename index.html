@@ -10,12 +10,10 @@
 <body>
 
 <header>
-  <label title="Export">⬇️
-    <input hidden onchange="exportData()">
-  </label>
-  <label title="Import">⬆️
-    <input type="file" hidden onchange="importData(this)">
-  </label>
+  <button onclick="exportData()" title="Export">⬇️</button>
+  <button type="button" title="Import" onclick="this.querySelector('input').click()">
+    ⬆️<input type="file" hidden onchange="importData(this)">
+  </button>
 </header>
 
 <main>
