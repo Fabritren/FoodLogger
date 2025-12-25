@@ -90,13 +90,29 @@ function updateTable() {
     console.log('updateTable: finished rendering table with', results.length, 'items');
   });
 }
-}
 
-function confirmDelete(index) {
-  const ok = confirm('Delete this entry? This cannot be undone.');
-  if (!ok) return;
+function confirmDelete(key) {
+  getRaw(key, entry => {
+      if (!entry) {
+        console.error('confirmDelete: entry not found for key', key);
+        return;
+      }
 
-  deleteEntry(index);
+      console.log(
+        `confirmDelete: deleting entry - time: ${entry.time}, text: ${entry.text}`
+      );
+
+      const ok = confirm(
+        `Delete this entry?\n\n` +
+        `Date: ${new Date(entry.time).toLocaleString()}\n` +
+        `Text: ${entry.text}\n\n` +
+        `This cannot be undone.`
+      );
+
+      if (!ok) return;
+
+      deleteEntry(key);
+    });
 }
 
 function deleteEntry(index) {
