@@ -65,7 +65,19 @@
       <button class="clear-btn" onclick="text.value=''">×</button>
       <button class="primary" onclick="addEntry()">Save</button>
     </div>
-
+    
+    <div class="input-row">
+      <input
+        type="text"
+        id="quickFilter"
+        placeholder="quick buttons filter ..."
+        oninput="updateQuickButtons()"
+      >
+      <button class="clear-btn" onclick="
+        this.previousElementSibling.value='';
+        updateQuickButtons();
+      ">×</button>
+    </div>
 
     <div id="quickButtons" class="quick-buttons"></div>
   </section>

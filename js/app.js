@@ -79,25 +79,30 @@ function updateQuickButtons() {
   console.log('[updateQuickButtons] called');
   quickButtons.innerHTML = '';
 
+  const filter = quickFilter.value.trim().toLowerCase();
+  console.log('[updateQuickButtons] filter =', filter);
+
   // Count occurrences
   const counts = {};
   processedTable.forEach(e => {
     counts[e.text] = (counts[e.text] || 0) + 1;
   });
-  console.log('[updateQuickButtons] counts computed for', Object.keys(counts).length, 'unique items');
 
   // Build sorted list:
   // 1) Most frequent first
   // 2) Alphabetical for ties
   const sorted = Object.keys(counts)
+    .filter(t =>
+      !filter || t.toLowerCase().includes(filter)
+    )
     .sort((a, b) => {
       const diff = counts[b] - counts[a];
       return diff !== 0 ? diff : a.localeCompare(b);
     });
 
-  console.log('[updateQuickButtons] sorted list length =', sorted.length);
+  console.log('[updateQuickButtons] filtered list length =', sorted.length);
 
-  // Create buttons for all unique sorted values
+  // Create buttons
   sorted.forEach(t => {
     const b = document.createElement('button');
     b.innerText = t;
@@ -105,12 +110,10 @@ function updateQuickButtons() {
       console.log('[quickButton] clicked:', t);
       const current = text.value.trim();
       text.value = current ? `${current}, ${t}` : t;
-      console.log('[quickButton] text field updated:', text.value);
+      text.setSelectionRange(text.value.length, text.value.length);
     };
     quickButtons.appendChild(b);
   });
-
-  console.log('[updateQuickButtons] quickButtons updated with', sorted.length, 'buttons');
 }
 
 function exportData(){
