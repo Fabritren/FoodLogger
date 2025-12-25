@@ -124,24 +124,3 @@ footer {
   margin-left: 0.3rem;
 }
 
-/* Column 1: Date — single line, ellipsis if too long */
-#dataTable th:nth-child(1),
-#dataTable td:nth-child(1) {
-  max-width: 140px;          /* adjust as needed */
-  white-space: nowrap;        /* prevent line breaks */
-  overflow: hidden;           /* hide overflow */
-  text-overflow: ellipsis;    /* show … if too long */
-}
-
-/* Column 2: Text — allow wrapping */
-#dataTable th:nth-child(2),
-#dataTable td:nth-child(2) {
-  white-space: normal;        /* allow wrapping */
-  word-break: break-word;     /* break long words if needed */
-  max-width: 300px;           /* optional: control max width */
-}
-
-/* Table wrapper — allow horizontal scroll if table is wide */
-.table-wrap {
-  overflow-x: auto;
-}
