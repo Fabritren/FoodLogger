@@ -14,12 +14,17 @@ function addEntry(){
   refresh();
 }
 
-function buildProcessed(raw){
-  processedTable = [];
-  raw.forEach(r=>{
-    r.text.split(',').map(s=>s.trim()).filter(Boolean)
-      .forEach(t=>processedTable.push({time:r.time,text:t}));
-  });
+function buildProcessed(raw) {
+  processedTable = raw.flatMap(r =>
+    r.text
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean)
+      .map(t => ({
+        time: r.time,
+        text: t.charAt(0).toUpperCase() + t.slice(1)
+      }))
+  );
 }
 
 function refresh(){
