@@ -71,8 +71,15 @@ function updateTable() {
       const entry = cursor.value;
 
       const tr = document.createElement('tr');
+      const d = new Date(entry.time);
       tr.innerHTML = `
-        <td>${new Date(entry.time).toLocaleString()}</td>
+        <td>
+          ${d.toLocaleDateString()} 
+          ${d.toLocaleTimeString(undefined, {
+            hour: "2-digit",
+            minute: "2-digit"
+          })}
+        </td>
         <td>${entry.text}</td>
         <td class="actions">
           <button title="Edit" onclick="editEntry(${key})">✏️</button>
