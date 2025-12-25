@@ -157,22 +157,25 @@ function updateQuickButtons() {
   console.log('[updateQuickButtons] called');
   quickButtons.innerHTML = '';
 
-  const filter = quickFilter.value.trim().toLowerCase();
-  console.log('[updateQuickButtons] filter =', filter);
+  const filterNorm = quickFilter.value.trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+  console.log('[updateQuickButtons] filter =', filterNorm);
 
-  // Count occurrences
+  // Count occurrences (original text, for display)
   const counts = {};
   processedTable.forEach(e => {
     counts[e.text] = (counts[e.text] || 0) + 1;
   });
 
-  // Build sorted list:
-  // 1) Most frequent first
-  // 2) Alphabetical for ties
+  // Build sorted list, filtering using normalized text
   const sorted = Object.keys(counts)
-    .filter(t =>
-      !filter || t.toLowerCase().includes(filter)
-    )
+    .filter(t => {
+      if (!filterNorm) return true;
+      const tNorm = t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      return tNorm.includes(filterNorm);
+    })
     .sort((a, b) => {
       const diff = counts[b] - counts[a];
       return diff !== 0 ? diff : a.localeCompare(b);
@@ -180,7 +183,7 @@ function updateQuickButtons() {
 
   console.log('[updateQuickButtons] filtered list length =', sorted.length);
 
-  // Create buttons
+  // Create buttons with original text
   sorted.forEach(t => {
     const b = document.createElement('button');
     b.innerText = t;
