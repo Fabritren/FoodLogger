@@ -10,7 +10,7 @@ function toggleAdd(){
 
 function addEntry() {
   const time = dt.value;
-  const value = text.value.trim();
+  const value = textNewEntry.value.trim();
   if (!time || !value) return;
 
   const entry = { time, text: value };
@@ -24,7 +24,7 @@ function addEntry() {
     addRaw(entry);
   }
 
-  text.value = '';
+  textNewEntry.value = '';
   refresh();
 }
 
@@ -137,7 +137,7 @@ function editEntry(key) {
 
     // Populate input fields
     dt.value = entry.time.slice(0, 16); // keep format compatible with datetime-local
-    text.value = entry.text;
+    textNewEntry.value = entry.text;
 
     // Change Save button text to indicate update
     document.querySelector('#panel-add .primary').innerText = 'Update';
@@ -150,7 +150,7 @@ function editEntry(key) {
 
 function discardEdit() {
   editingKey = null;                    // cancel editing mode
-  text.value = '';                       // clear input
+  textNewEntry.value = '';                       // clear input
   dt.value = new Date().toISOString().slice(0,16); // reset to now
   document.querySelector('#panel-add .primary').innerText = 'Save'; // restore button text
   document.getElementById('discardBtn').hidden = true; // hide discard button
@@ -205,9 +205,9 @@ function updateQuickButtons() {
     b.innerText = t;
     b.onclick = () => {
       console.log('[quickButton] clicked:', t);
-      const current = text.value.trim();
-      text.value = current ? `${current}, ${t}` : t;
-      text.setSelectionRange(text.value.length, text.value.length);
+      const current = textNewEntry.value.trim();
+      textNewEntry.value = current ? `${current}, ${t}` : t;
+      textNewEntry.setSelectionRange(textNewEntry.value.length, textNewEntry.value.length);
     };
     quickButtons.appendChild(b);
   });
