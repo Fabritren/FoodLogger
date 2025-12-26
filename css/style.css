@@ -130,3 +130,10 @@ footer {
   box-sizing: border-box;
   font-size: 1rem;
 }
+
+canvas {
+  display:block;
+  width:100vw;
+  height:100vh;
+  touch-action: none; /* IMPORTANT for mobile gestures */
+}
