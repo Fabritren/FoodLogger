@@ -2,6 +2,14 @@ const canvas = document.getElementById("plot");
 const ctx = canvas.getContext("2d");
 
 /* --------------------
+   Layout constants
+-------------------- */
+const PAD_L = 55;
+const PAD_T = 10;
+const PAD_B = 30;
+const PAD_R = 10;
+
+/* --------------------
    Internal render state
 -------------------- */
 let currentData = [];
@@ -14,14 +22,33 @@ const view = {
 };
 
 /* --------------------
-   Resize to container
+   Resize to SECTION
 -------------------- */
 function resizeCanvas() {
-  const r = canvas.getBoundingClientRect();
-  canvas.width  = r.width;
-  canvas.height = r.height;
+  const panel = canvas.parentElement;
+  const h2 = panel.querySelector("h2");
+  const rect = panel.getBoundingClientRect();
+
+  const cssWidth  = rect.width;
+  const cssHeight = rect.height - (h2 ? h2.offsetHeight : 0);
+
+  const dpr = window.devicePixelRatio || 1;
+
+  // Set CSS size
+  canvas.style.width  = cssWidth + "px";
+  canvas.style.height = cssHeight + "px";
+
+  // Set actual pixel buffer
+  canvas.width  = Math.round(cssWidth * dpr);
+  canvas.height = Math.round(cssHeight * dpr);
+
+  // Reset transform BEFORE scaling
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.scale(dpr, dpr);
+
   redraw();
 }
+
 
 window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
@@ -35,20 +62,14 @@ function drawPlot(data) {
 }
 
 /* --------------------
-   Redraw using cached data
+   Redraw
 -------------------- */
 function redraw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   if (!currentData.length) return;
 
-  const PAD_L = 55;
-  const PAD_T = 10;
-  const PAD_B = 30;
-  const PAD_R = 10;
-
   const W = canvas.width  - PAD_L - PAD_R;
   const H = canvas.height - PAD_T - PAD_B;
-
   const DAY = 86400000;
 
   // ---- Time bounds
@@ -62,7 +83,7 @@ function redraw() {
   const totalDays = (maxDay - minDay) / DAY;
 
   /* --------------------
-     Fixed Y grid (0–24h)
+     Fixed Y grid
   -------------------- */
   ctx.strokeStyle = "#e0e0e0";
   ctx.fillStyle = "#666";
@@ -78,7 +99,7 @@ function redraw() {
   }
 
   /* --------------------
-     X grid (days)
+     X grid
   -------------------- */
   for (let d = 0; d <= totalDays; d++) {
     const x =
@@ -90,48 +111,72 @@ function redraw() {
     ctx.moveTo(x, PAD_T);
     ctx.lineTo(x, canvas.height - PAD_B);
     ctx.stroke();
-
-    if (view.zoomX > 1.3) {
-      const day = new Date(minDay.getTime() + d * DAY);
-      ctx.fillText(day.toLocaleDateString(), x + 4, canvas.height - 8);
-    }
   }
 
   /* --------------------
-     Blocks (CENTERED per day)
+     CLIP to plot area
+  -------------------- */
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(PAD_L, PAD_T, W, H);
+  ctx.clip();
+
+  /* --------------------
+     Blocks
   -------------------- */
   currentData.forEach(e => {
     const t = new Date(e.time);
-
     const dayIdx = Math.floor((t - minDay) / DAY);
     const hour = t.getHours();
 
-    // ---- X center at day
     const dayCenterX =
       PAD_L +
       ((dayIdx + 0.5) / totalDays) * W * view.zoomX +
       view.offsetX;
 
     const blockW = (W / totalDays) * view.zoomX;
-    const x = dayCenterX - blockW / 2;
-
-    // ---- Y from hour (1h height)
     const blockH = H / 24;
-    const y =
-      PAD_T +
-      H -
-      ((hour + 1) / 24) * H;
+
+    const x = dayCenterX - blockW / 2;
+    const y = PAD_T + H - ((hour + 1) / 24) * H;
 
     ctx.fillStyle = colorFor(e.text);
     ctx.fillRect(x, y, blockW, blockH);
 
-    // ---- Text when zoomed
     if (view.zoomX > 2) {
       ctx.fillStyle = "#000";
       ctx.font = "12px sans-serif";
-      ctx.fillText(e.text, x + 4, y + blockH / 2 + 4);
+      wrapText(ctx, e.text, x + 4, y + 14, blockW - 8, blockH - 6);
     }
   });
+
+  ctx.restore();
+
+  /* --------------------
+    X axis day labels (VISIBLE)
+  -------------------- */
+  ctx.fillStyle = "#333";
+  ctx.font = "11px sans-serif";
+
+  for (let d = 0; d <= totalDays; d++) {
+    const x =
+      PAD_L +
+      (d / totalDays) * W * view.zoomX +
+      view.offsetX;
+
+    // Only draw labels that are inside view
+    if (x < PAD_L || x > canvas.width - PAD_R) continue;
+
+    if (view.zoomX > 1.3) {
+      const day = new Date(minDay.getTime() + d * DAY);
+      ctx.fillText(
+        day.toLocaleDateString(),
+        x + 4,
+        canvas.height - 10
+      );
+    }
+  }
+
 
   /* --------------------
      Axes
@@ -142,6 +187,32 @@ function redraw() {
   ctx.lineTo(PAD_L, canvas.height - PAD_B);
   ctx.lineTo(canvas.width - PAD_R, canvas.height - PAD_B);
   ctx.stroke();
+}
+
+/* --------------------
+   Text wrapping helper
+-------------------- */
+function wrapText(ctx, text, x, y, maxWidth, maxHeight) {
+  const words = text.split(" ");
+  let line = "";
+  const lineHeight = 14;
+  let cy = y;
+
+  for (let i = 0; i < words.length; i++) {
+    const test = line + words[i] + " ";
+    if (ctx.measureText(test).width > maxWidth && line) {
+      if (cy + lineHeight > y + maxHeight) return;
+      ctx.fillText(line, x, cy);
+      line = words[i] + " ";
+      cy += lineHeight;
+    } else {
+      line = test;
+    }
+  }
+
+  if (cy + lineHeight <= y + maxHeight) {
+    ctx.fillText(line, x, cy);
+  }
 }
 
 /* --------------------
@@ -182,25 +253,19 @@ canvas.addEventListener(
   e => {
     e.preventDefault();
 
-    const mouseX = e.clientX - canvas.getBoundingClientRect().left;
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
     const zoomFactor = e.deltaY < 0 ? 1.15 : 0.85;
 
     const oldZoom = view.zoomX;
     const newZoom = Math.max(0.5, Math.min(20, oldZoom * zoomFactor));
 
-    // ---- Data-space X under cursor BEFORE zoom
-    const dataX =
-      (mouseX - view.offsetX - 55) / oldZoom;
+    const dataX = (mouseX - PAD_L - view.offsetX) / oldZoom;
 
-    // ---- Apply zoom
     view.zoomX = newZoom;
-
-    // ---- Adjust offset so cursor stays anchored
-    view.offsetX =
-      mouseX - 55 - dataX * newZoom;
+    view.offsetX = mouseX - PAD_L - dataX * newZoom;
 
     redraw();
   },
   { passive: false }
 );
-
