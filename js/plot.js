@@ -4,7 +4,7 @@ function drawPlot(data) {
     new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: [1, 2],
+            labels: [1, 3],
             datasets: [
             {
                 label: 'Dataset 1',
@@ -41,21 +41,10 @@ function drawPlot(data) {
                 }
             },
             plugins: {
-                zoom: {
-                pan: {
-                    enabled: true,
-                    mode: 'x'
-                },
-                zoom: {
-                    wheel: {
-                        enabled: true
-                    },
-                    pinch: {
-                        enabled: true
-                    },
-                    mode: 'x'
-                }
-                }
+              zoom: {
+                pan: { enabled: true, mode: 'x' },
+                zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x' }
+              }
             }
         }
     });
