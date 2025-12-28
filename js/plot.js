@@ -133,10 +133,6 @@ function drawPlot(data) {
 
     const { labels, datasets } = buildDatasets(data);
 
-    datasets.forEach(ds => {
-        ds.barThickness = 'flex';
-    });
-
     new Chart(ctx, {
         type: 'bar',
         data: {
