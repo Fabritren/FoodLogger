@@ -174,6 +174,11 @@ function drawPlot(data) {
     hidden: false
   }));
 
+  // Determine min and max X for the current dataset
+  const xValues = rects.map(r => r.x);
+  const minX = Math.min(...xValues);
+  const maxX = Math.max(...xValues);
+
   myChart = new Chart(ctx, {
     type: 'scatter',
     data: { datasets },
@@ -184,6 +189,8 @@ function drawPlot(data) {
         x: {
           type: 'linear',
           offset: false,
+          min: minX - 0.5, // add a little padding
+          max: maxX + 0.5,
           title: { display: true, text: 'Date' },
           ticks: { stepSize: 1, precision: 0 },
           afterBuildTicks(scale) {
