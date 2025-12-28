@@ -1,71 +1,92 @@
-const wrapText = (ctx, rawText, maxWidth) => {
-  if (rawText == null) return [];
-
-  const text = String(rawText);   // ensure string
-  const words = text.split(" ");
+function wrapText(ctx, text, maxWidth) {
+  const words = text.split(' ');
   const lines = [];
-  let line = "";
+  let line = '';
 
-  for (const w of words) {
-    const testLine = line + w + " ";
-    if (ctx.measureText(testLine).width > maxWidth) {
-      lines.push(line.trim());
-      line = w + " ";
+  words.forEach(word => {
+    const testLine = line ? `${line} ${word}` : word;
+    const { width } = ctx.measureText(testLine);
+
+    if (width > maxWidth && line) {
+      lines.push(line);
+      line = word;
     } else {
       line = testLine;
     }
-  }
-  lines.push(line.trim());
+  });
+
+  if (line) lines.push(line);
   return lines;
-};
+}
 
-const insideBarLabels = {
-  id: "insideBarLabels",
-  afterDatasetsDraw(chart, args, options) {
-    const { ctx } = chart;
+const rectangleLabelsPlugin = {
+  id: 'rectangleLabels',
 
-    chart.data.datasets.forEach((dataset, datasetIndex) => {
-      const meta = chart.getDatasetMeta(datasetIndex);
+  afterDatasetsDraw(chart) {
+    const { ctx, scales } = chart;
+    const xScale = scales.x;
+    const yScale = scales.y;
 
-      // Skip entire dataset if hidden
-      if (meta.hidden) return;
+    if (!chart.$rects) return;
 
-      meta.data.forEach((bar, index) => {
-        if (bar.hidden) return;
+    // Group by X to match rectangle layout
+    const groups = {};
+    chart.$rects.forEach(r => {
+      groups[r.x] ??= [];
+      groups[r.x].push(r);
+    });
 
-        const labelText = dataset.label;
+    ctx.save();
+    ctx.fillStyle = 'white';
+    ctx.font = '12px sans-serif';
+    ctx.textBaseline = 'top';
 
-        const props = bar.getProps(["x", "y", "width", "height"], true);
-        const { x, y, width, height } = props;
+    Object.entries(groups).forEach(([x, group]) => {
+      const xValue = +x;
+      const centerX = xScale.getPixelForValue(xValue);
+      const dayWidth =
+        xScale.getPixelForValue(xValue + 1) -
+        xScale.getPixelForValue(xValue);
+
+      const rectWidth = dayWidth / group.length;
+
+      group.forEach((r, i) => {
+        const left =
+          centerX - dayWidth / 2 + i * rectWidth;
+
+        const top = yScale.getPixelForValue(r.yEnd);
+        const bottom = yScale.getPixelForValue(r.yStart);
+        const height = bottom - top;
+
+        // Skip if rectangle is too small
+        if (rectWidth < 12 || height < 12) return;
 
         ctx.save();
 
-        // Clip drawing to the bar area
+        // 🔹 clip to rectangle
         ctx.beginPath();
-        ctx.rect(x - width / 2, y, width, height);
+        ctx.rect(left, top, rectWidth, height);
         ctx.clip();
 
-        ctx.fillStyle = "white";
-        ctx.font = "12px sans-serif";
-        ctx.textBaseline = "middle";
-
         const padding = 4;
-        const maxWidth = width - padding * 2;
+        const maxWidth = rectWidth - padding * 2;
 
-        const lines = wrapText(ctx, labelText, maxWidth);
+        const lines = wrapText(ctx, r.label, maxWidth);
 
         const lineHeight = 14;
         const totalHeight = lines.length * lineHeight;
-        let startY = y + height / 2 - totalHeight / 2;
+        let y = top + height / 2 - totalHeight / 2;
 
         lines.forEach(line => {
-          ctx.fillText(line, x - width / 2 + padding, startY);
-          startY += lineHeight;
+          ctx.fillText(line, left + padding, y);
+          y += lineHeight;
         });
 
         ctx.restore();
       });
     });
+
+    ctx.restore();
   }
 };
 
@@ -85,129 +106,138 @@ function generateColor(index, total) {
   return `hsla(${hue}, 70%, 55%, 0.7)`;
 }
 
-function buildDatasets(data) {
-  const grouped = {};
-  const datesSet = new Set();
+const rectanglePlugin = {
+  id: 'rectanglePlugin',
 
-  // Group by text
-  data.forEach(item => {
-    const date = new Date(item.time);
-    const dateKey = getDateX(date);
-    datesSet.add(dateKey);
+  afterDatasetsDraw(chart) {
+    const { ctx, scales } = chart;
+    const xScale = scales.x;
+    const yScale = scales.y;
 
-    if (!grouped[item.text]) {
-      grouped[item.text] = {};
-    }
+    // group by X value
+    const groups = {};
+    chart.$rects.forEach(r => {
+      groups[r.x] ??= [];
+      groups[r.x].push(r);
+    });
 
-    const start = getHourValue(date);
-    const end = start + 1;
+    Object.entries(groups).forEach(([x, group]) => {
+      const xValue = +x;
+      const centerX = xScale.getPixelForValue(xValue);
 
-    grouped[item.text][dateKey] = [start, end];
-  });
+      // width of one day in pixels
+      const dayWidth =
+        xScale.getPixelForValue(xValue + 1) -
+        xScale.getPixelForValue(xValue);
 
-  const labels = Array.from(datesSet).sort();
-  const texts = Object.keys(grouped);
+      const rectWidth = dayWidth / group.length;
 
-  const datasets = texts.map((text, i) => ({
-    label: text,
-    data: labels.map(d => grouped[text][d] ?? null),
-    backgroundColor: generateColor(i, texts.length),
-    //stack: 'time'
-  }));
+      group.forEach((r, i) => {
+        const left =
+          centerX - dayWidth / 2 + i * rectWidth;
 
-  console.log("[buildDatasets] labels:", labels)
-  console.log("[buildDatasets] datasets:", datasets)
+        const top = yScale.getPixelForValue(r.yEnd);
+        const bottom = yScale.getPixelForValue(r.yStart);
 
-  return { labels, datasets };
-}
+        ctx.fillStyle = r.color;
+        ctx.fillRect(
+          left,
+          top,
+          rectWidth,
+          bottom - top
+        );
+      });
+    });
+  }
+};
 
-
-function getXRange(datasets) {
-  const xs = [];
-
-  datasets.forEach(ds => {
-    ds.data.forEach(p => xs.push(p.x));
-  });
-
-  min_val = Math.min(...xs)
-  max_val = Math.max(...xs)
-
-  console.log("[getXRange]: ", min_val, max_val)
-
-  return {
-    min: min_val,
-    max: max_val
-  };
-}
 
 let myChart = null;
 
 function drawPlot(data) {
-  // Destroy previous chart if it exists
   if (myChart) {
     myChart.destroy();
   }
 
   const ctx = document.getElementById('plot');
 
-  const { labels, datasets } = buildDatasets(data);
-
-  myChart = new Chart(ctx, {
-      type: 'bar',
-      data: {
-          labels,
-          datasets
-      },
-      options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-              x: {
-                  type: 'linear',   // 'linear' 'category' / 'time',
-                  title: {
-                      display: true,
-                      text: 'Date'
-                  },
-                  ticks: {
-                      //callback: value => new Date(value).toLocaleDateString()
-                      stepSize: 1,
-                      precision: 0
-                  },
-                  afterBuildTicks(scale) {
-                    const min = Math.ceil(scale.min);
-                    const max = Math.floor(scale.max);
-                    const ticks = [];
-                    for (let v = min; v <= max; v++) {
-                      ticks.push({ value: v });
-                    }
-                    scale.ticks = ticks;
-                  }
-              },
-              y: {
-                  min: 0,
-                  max: 24,
-                  beginAtZero: false,
-                  title: {
-                      display: true,
-                      text: 'Hour of day'
-                  },
-                  ticks: {
-                    stepSize: 2
-                  },
-              }
-          },
-          plugins: {
-            zoom: {
-              pan: { enabled: true, mode: 'x' },
-              zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x' }
-            },
-            legend: { 
-              position: 'bottom',
-            },
-          }
-      },
-      plugins: [insideBarLabels]
+  // each rectangle = one visual block
+  // x = day (integer)
+  // yStart / yEnd = hour range
+  const rects = data.map((item, i) => {
+    const date = new Date(item.time);
+    return {
+      x: getDateX(date),
+      yStart: getHourValue(date),
+      yEnd: getHourValue(date) + 1,
+      label: item.text,
+      color: generateColor(i, data.length)
+    };
   });
 
-  console.log("Finished setting up graph")
+  console.log(rects);
+
+  myChart = new Chart(ctx, {
+    type: 'scatter', // important
+    data: {
+      datasets: [] // bars are NOT used
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          type: 'linear',
+          offset: false,
+          title: {
+            display: true,
+            text: 'Date'
+          },
+          ticks: {
+            stepSize: 1,
+            precision: 0
+          },
+          afterBuildTicks(scale) {
+            const min = Math.ceil(scale.min);
+            const max = Math.floor(scale.max);
+            const ticks = [];
+            for (let v = min; v <= max; v++) {
+              ticks.push({ value: v });
+            }
+            scale.ticks = ticks;
+          }
+        },
+        y: {
+          min: 0,
+          max: 24,
+          title: {
+            display: true,
+            text: 'Hour of day'
+          },
+          ticks: {
+            stepSize: 2
+          }
+        }
+      },
+      plugins: {
+        zoom: {
+          pan: { enabled: true, mode: 'x' },
+          zoom: {
+            wheel: { enabled: true },
+            pinch: { enabled: true },
+            mode: 'x'
+          }
+        },
+        legend: {
+          position: 'bottom'
+        }
+      }
+    },
+    plugins: [rectanglePlugin, rectangleLabelsPlugin]
+  });
+
+  // attach rectangles to chart instance
+  myChart.$rects = rects;
+
+  console.log("Finished setting up graph");
 }
