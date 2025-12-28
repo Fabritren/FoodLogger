@@ -200,7 +200,10 @@ function drawPlot(data) {
             zoom: {
               pan: { enabled: true, mode: 'x' },
               zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x' }
-            }
+            },
+            legend: { 
+              position: 'bottom',
+            },
           }
       },
       plugins: [insideBarLabels]
