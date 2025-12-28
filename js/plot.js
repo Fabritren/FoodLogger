@@ -137,54 +137,54 @@ function drawPlot(data) {
     myChart.destroy();
   }
 
-    const ctx = document.getElementById('plot');
+  const ctx = document.getElementById('plot');
 
-    const { labels, datasets } = buildDatasets(data);
+  const { labels, datasets } = buildDatasets(data);
 
   myChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels,
-            datasets
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                x: {
-                    type: 'linear',   // 'linear' 'category' / 'time',
-                    title: {
-                        display: true,
-                        text: 'Date'
-                    },
-                    ticks: {
-                        //callback: value => new Date(value).toLocaleDateString()
-                        stepSize: 1,
-                        precision: 0
-                    }
-                },
-                y: {
-                    min: 0,
-                    max: 24,
-                    beginAtZero: false,
-                    title: {
-                        display: true,
-                        text: 'Hour of day'
-                    },
-                    ticks: {
-                      stepSize: 2
-                    },
-                }
-            },
-            plugins: {
-              zoom: {
-                pan: { enabled: true, mode: 'x' },
-                zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x' }
+      type: 'bar',
+      data: {
+          labels,
+          datasets
+      },
+      options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+              x: {
+                  type: 'linear',   // 'linear' 'category' / 'time',
+                  title: {
+                      display: true,
+                      text: 'Date'
+                  },
+                  ticks: {
+                      //callback: value => new Date(value).toLocaleDateString()
+                      stepSize: 1,
+                      precision: 0
+                  }
+              },
+              y: {
+                  min: 0,
+                  max: 24,
+                  beginAtZero: false,
+                  title: {
+                      display: true,
+                      text: 'Hour of day'
+                  },
+                  ticks: {
+                    stepSize: 2
+                  },
               }
+          },
+          plugins: {
+            zoom: {
+              pan: { enabled: true, mode: 'x' },
+              zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x' }
             }
-        },
-        plugins: [insideBarLabels]
-    });
+          }
+      },
+      plugins: [insideBarLabels]
+  });
 
-    console.log("Finished setting up graph")
+  console.log("Finished setting up graph")
 }
