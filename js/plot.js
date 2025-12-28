@@ -128,12 +128,19 @@ function getXRange(datasets) {
   };
 }
 
+let myChart = null;
+
 function drawPlot(data) {
+  // Destroy previous chart if it exists
+  if (myChart) {
+    myChart.destroy();
+  }
+
     const ctx = document.getElementById('plot');
 
     const { labels, datasets } = buildDatasets(data);
 
-    new Chart(ctx, {
+  myChart = new Chart(ctx, {
         type: 'bar',
         data: {
             labels,
