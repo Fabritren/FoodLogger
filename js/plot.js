@@ -27,13 +27,24 @@ const insideBarLabels = {
     chart.data.datasets.forEach((dataset, datasetIndex) => {
       const meta = chart.getDatasetMeta(datasetIndex);
 
+      // Skip entire dataset if hidden
+      if (meta.hidden) return;
+
       meta.data.forEach((bar, index) => {
-        const labelText = dataset.label;   // <-- THIS is what you asked for
+        if (bar.hidden) return;
+
+        const labelText = dataset.label;
 
         const props = bar.getProps(["x", "y", "width", "height"], true);
         const { x, y, width, height } = props;
 
         ctx.save();
+
+        // Clip drawing to the bar area
+        ctx.beginPath();
+        ctx.rect(x - width / 2, y, width, height);
+        ctx.clip();
+
         ctx.fillStyle = "white";
         ctx.font = "12px sans-serif";
         ctx.textBaseline = "middle";
