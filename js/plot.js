@@ -172,6 +172,15 @@ function drawPlot(data) {
                       //callback: value => new Date(value).toLocaleDateString()
                       stepSize: 1,
                       precision: 0
+                  },
+                  afterBuildTicks(scale) {
+                    const min = Math.ceil(scale.min);
+                    const max = Math.floor(scale.max);
+                    const ticks = [];
+                    for (let v = min; v <= max; v++) {
+                      ticks.push({ value: v });
+                    }
+                    scale.ticks = ticks;
                   }
               },
               y: {
