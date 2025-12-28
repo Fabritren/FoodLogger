@@ -166,7 +166,10 @@ function drawPlot(data) {
                     title: {
                         display: true,
                         text: 'Hour of day'
-                    }
+                    },
+                    ticks: {
+                      stepSize: 2
+                    },
                 }
             },
             plugins: {
