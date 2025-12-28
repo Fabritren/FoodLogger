@@ -29,9 +29,9 @@ const rectangleLabelsPlugin = {
 
     if (!chart.$rects) return;
 
-    // Group by X to match rectangle layout
     const groups = {};
     chart.$rects.forEach(r => {
+      if (r.hidden) return; // skip hidden rectangles
       groups[r.x] ??= [];
       groups[r.x].push(r);
     });
@@ -51,19 +51,14 @@ const rectangleLabelsPlugin = {
       const rectWidth = dayWidth / group.length;
 
       group.forEach((r, i) => {
-        const left =
-          centerX - dayWidth / 2 + i * rectWidth;
-
+        const left = centerX - dayWidth / 2 + i * rectWidth;
         const top = yScale.getPixelForValue(r.yEnd);
         const bottom = yScale.getPixelForValue(r.yStart);
         const height = bottom - top;
 
-        // Skip if rectangle is too small
         if (rectWidth < 12 || height < 12) return;
 
         ctx.save();
-
-        // 🔹 clip to rectangle
         ctx.beginPath();
         ctx.rect(left, top, rectWidth, height);
         ctx.clip();
@@ -92,9 +87,8 @@ const rectangleLabelsPlugin = {
 
 function getDateX(date) {
   const d = new Date(date);
-  d.setHours(0, 0, 0, 0); // normalize per day
-  value = d.getDate();
-  return value;
+  d.setHours(0, 0, 0, 0);
+  return d.getDate();
 }
 
 function getHourValue(date) {
@@ -114,9 +108,9 @@ const rectanglePlugin = {
     const xScale = scales.x;
     const yScale = scales.y;
 
-    // group by X value
     const groups = {};
     chart.$rects.forEach(r => {
+      if (r.hidden) return; // skip hidden
       groups[r.x] ??= [];
       groups[r.x].push(r);
     });
@@ -125,7 +119,6 @@ const rectanglePlugin = {
       const xValue = +x;
       const centerX = xScale.getPixelForValue(xValue);
 
-      // width of one day in pixels
       const dayWidth =
         xScale.getPixelForValue(xValue + 1) -
         xScale.getPixelForValue(xValue);
@@ -133,24 +126,16 @@ const rectanglePlugin = {
       const rectWidth = dayWidth / group.length;
 
       group.forEach((r, i) => {
-        const left =
-          centerX - dayWidth / 2 + i * rectWidth;
-
+        const left = centerX - dayWidth / 2 + i * rectWidth;
         const top = yScale.getPixelForValue(r.yEnd);
         const bottom = yScale.getPixelForValue(r.yStart);
 
         ctx.fillStyle = r.color;
-        ctx.fillRect(
-          left,
-          top,
-          rectWidth,
-          bottom - top
-        );
+        ctx.fillRect(left, top, rectWidth, bottom - top);
       });
     });
   }
 };
-
 
 let myChart = null;
 
@@ -161,27 +146,37 @@ function drawPlot(data) {
 
   const ctx = document.getElementById('plot');
 
-  // each rectangle = one visual block
-  // x = day (integer)
-  // yStart / yEnd = hour range
-  const rects = data.map((item, i) => {
+  // Count unique labels
+  const uniqueLabels = [...new Set(data.map(item => item.text))];
+  const labelColorMap = {};
+  uniqueLabels.forEach((label, i) => {
+    labelColorMap[label] = generateColor(i, uniqueLabels.length);
+  });
+
+  const rects = data.map(item => {
     const date = new Date(item.time);
+    const label = item.text;
     return {
       x: getDateX(date),
       yStart: getHourValue(date),
       yEnd: getHourValue(date) + 1,
-      label: item.text,
-      color: generateColor(i, data.length)
+      label: label,
+      color: labelColorMap[label],
+      hidden: false
     };
   });
 
-  console.log(rects);
+  const datasets = uniqueLabels.map(label => ({
+    label: label,
+    data: [{ x: 0, y: 0 }],
+    backgroundColor: labelColorMap[label],
+    borderColor: labelColorMap[label],
+    hidden: false
+  }));
 
   myChart = new Chart(ctx, {
-    type: 'scatter', // important
-    data: {
-      datasets: [] // bars are NOT used
-    },
+    type: 'scatter',
+    data: { datasets },
     options: {
       responsive: true,
       maintainAspectRatio: false,
@@ -189,55 +184,43 @@ function drawPlot(data) {
         x: {
           type: 'linear',
           offset: false,
-          title: {
-            display: true,
-            text: 'Date'
-          },
-          ticks: {
-            stepSize: 1,
-            precision: 0
-          },
+          title: { display: true, text: 'Date' },
+          ticks: { stepSize: 1, precision: 0 },
           afterBuildTicks(scale) {
             const min = Math.ceil(scale.min);
             const max = Math.floor(scale.max);
             const ticks = [];
-            for (let v = min; v <= max; v++) {
-              ticks.push({ value: v });
-            }
+            for (let v = min; v <= max; v++) ticks.push({ value: v });
             scale.ticks = ticks;
           }
         },
         y: {
           min: 0,
           max: 24,
-          title: {
-            display: true,
-            text: 'Hour of day'
-          },
-          ticks: {
-            stepSize: 2
-          }
+          title: { display: true, text: 'Hour of day' },
+          ticks: { stepSize: 2 }
         }
       },
       plugins: {
         zoom: {
           pan: { enabled: true, mode: 'x' },
-          zoom: {
-            wheel: { enabled: true },
-            pinch: { enabled: true },
-            mode: 'x'
-          }
+          zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x' }
         },
         legend: {
-          position: 'bottom'
+          position: 'bottom',
+          onClick: (e, legendItem) => {
+            const label = legendItem.text;
+            myChart.$rects.forEach(r => {
+              if (r.label === label) r.hidden = !r.hidden;
+            });
+            myChart.update();
+          }
         }
       }
     },
     plugins: [rectanglePlugin, rectangleLabelsPlugin]
   });
 
-  // attach rectangles to chart instance
   myChart.$rects = rects;
-
   console.log("Finished setting up graph");
 }
