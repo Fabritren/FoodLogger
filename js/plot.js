@@ -104,7 +104,8 @@ function buildDatasets(data) {
     //stack: 'time'
   }));
 
-  console.log("[buildDatasets]:", labels, datasets)
+  console.log("[buildDatasets] labels:", labels)
+  console.log("[buildDatasets] datasets:", datasets)
 
   return { labels, datasets };
 }
