@@ -201,25 +201,20 @@ function drawPlot(data) {
           },
           afterBuildTicks(scale) {
             const ticks = [];
-
             const minInt = Math.ceil(scale.min);
             const maxInt = Math.floor(scale.max);
-
             // integer ticks (for labels)
             for (let v = minInt; v <= maxInt; v++) {
               ticks.push({ value: v });
             }
-
             // half ticks (for grid lines)
             for (let v = minInt - 0.5; v <= maxInt + 0.5; v += 1) {
               if (v >= scale.min && v <= scale.max) {
                 ticks.push({ value: v });
               }
             }
-
             // sort required
             ticks.sort((a, b) => a.value - b.value);
-
             scale.ticks = ticks;
           },
           grid: {
