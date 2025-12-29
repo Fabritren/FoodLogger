@@ -247,14 +247,24 @@ function drawPlot(data) {
         },
         legend: {
           position: 'bottom',
-          onClick: (e, legendItem) => {
+          onClick: function (e, legendItem, legend) {
+            // Run Chart.js default legend behavior (adds strikethrough)
+            Chart.defaults.plugins.legend.onClick.call(
+              legend,
+              e,
+              legendItem,
+              legend
+            );
+            // hiding logic
             const label = legendItem.text;
             myChart.$rects.forEach(r => {
-              if (r.label === label) r.hidden = !r.hidden;
+              if (r.label === label) {
+                r.hidden = !r.hidden;
+              }
             });
             myChart.update();
           }
-        }
+        },
       }
     },
     plugins: [rectanglePlugin, rectangleLabelsPlugin]
