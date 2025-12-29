@@ -192,14 +192,51 @@ function drawPlot(data) {
           min: minX - 0.5, // add a little padding
           max: maxX + 0.5,
           title: { display: true, text: 'Date' },
-          ticks: { stepSize: 1, precision: 0 },
+          ticks: {
+            stepSize: 0.5,
+            callback: (value) => {
+              // show labels only at integers
+              return Number.isInteger(value) ? value : '';
+            }
+          },
           afterBuildTicks(scale) {
-            const min = Math.ceil(scale.min);
-            const max = Math.floor(scale.max);
             const ticks = [];
-            for (let v = min; v <= max; v++) ticks.push({ value: v });
+
+            const minInt = Math.ceil(scale.min);
+            const maxInt = Math.floor(scale.max);
+
+            // integer ticks (for labels)
+            for (let v = minInt; v <= maxInt; v++) {
+              ticks.push({ value: v });
+            }
+
+            // half ticks (for grid lines)
+            for (let v = minInt - 0.5; v <= maxInt + 0.5; v += 1) {
+              if (v >= scale.min && v <= scale.max) {
+                ticks.push({ value: v });
+              }
+            }
+
+            // sort required
+            ticks.sort((a, b) => a.value - b.value);
+
             scale.ticks = ticks;
-          }
+          },
+          grid: {
+            drawBorder: true,
+            color: (ctx) => {
+              const v = ctx.tick.value;
+              // no grid line at integers
+              if (Number.isInteger(v)) {
+                return 'rgba(0,0,0,0)';
+              }
+              // grid line at ±0.5
+              return 'rgba(0,0,0,0.2)';
+            },
+            // optional: thinner grid lines
+            lineWidth: (ctx) =>
+              Number.isInteger(ctx.tick.value) ? 0 : 1
+          },
         },
         y: {
           min: 0,
