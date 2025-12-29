@@ -19,72 +19,6 @@ function wrapText(ctx, text, maxWidth) {
   return lines;
 }
 
-const rectangleLabelsPlugin = {
-  id: 'rectangleLabels',
-
-  afterDatasetsDraw(chart) {
-    const { ctx, scales } = chart;
-    const xScale = scales.x;
-    const yScale = scales.y;
-
-    if (!chart.$rects) return;
-
-    const groups = {};
-    chart.$rects.forEach(r => {
-      if (r.hidden) return; // skip hidden rectangles
-      groups[r.x] ??= [];
-      groups[r.x].push(r);
-    });
-
-    ctx.save();
-    ctx.fillStyle = 'white';
-    ctx.font = '12px sans-serif';
-    ctx.textBaseline = 'top';
-
-    Object.entries(groups).forEach(([x, group]) => {
-      const xValue = +x;
-      const centerX = xScale.getPixelForValue(xValue);
-      const dayWidth =
-        xScale.getPixelForValue(xValue + 1) -
-        xScale.getPixelForValue(xValue);
-
-      const rectWidth = dayWidth / group.length;
-
-      group.forEach((r, i) => {
-        const left = centerX - dayWidth / 2 + i * rectWidth;
-        const top = yScale.getPixelForValue(r.yEnd);
-        const bottom = yScale.getPixelForValue(r.yStart);
-        const height = bottom - top;
-
-        if (rectWidth < 12 || height < 12) return;
-
-        ctx.save();
-        ctx.beginPath();
-        ctx.rect(left, top, rectWidth, height);
-        ctx.clip();
-
-        const padding = 4;
-        const maxWidth = rectWidth - padding * 2;
-
-        const lines = wrapText(ctx, r.label, maxWidth);
-
-        const lineHeight = 14;
-        const totalHeight = lines.length * lineHeight;
-        let y = top + height / 2 - totalHeight / 2;
-
-        lines.forEach(line => {
-          ctx.fillText(line, left + padding, y);
-          y += lineHeight;
-        });
-
-        ctx.restore();
-      });
-    });
-
-    ctx.restore();
-  }
-};
-
 function getDateX(date) {
   const d = new Date(date);
   d.setHours(0, 0, 0, 0);
@@ -108,12 +42,19 @@ const rectanglePlugin = {
     const xScale = scales.x;
     const yScale = scales.y;
 
+    if (!chart.$rects) return;
+
+    // Group rectangles by X value
     const groups = {};
     chart.$rects.forEach(r => {
       if (r.hidden) return; // skip hidden
       groups[r.x] ??= [];
       groups[r.x].push(r);
     });
+
+    ctx.save();
+    ctx.font = '12px sans-serif';
+    ctx.textBaseline = 'top';
 
     Object.entries(groups).forEach(([x, group]) => {
       const xValue = +x;
@@ -123,17 +64,66 @@ const rectanglePlugin = {
         xScale.getPixelForValue(xValue + 1) -
         xScale.getPixelForValue(xValue);
 
-      const rectWidth = dayWidth / group.length;
+      // Further group by overlapping Y ranges
+      const yGroups = [];
+      group.forEach(r => {
+        let found = false;
+        for (const yg of yGroups) {
+          if (yg.some(other =>
+            !(r.yEnd <= other.yStart || r.yStart >= other.yEnd)
+          )) {
+            yg.push(r);
+            found = true;
+            break;
+          }
+        }
+        if (!found) yGroups.push([r]);
+      });
 
-      group.forEach((r, i) => {
-        const left = centerX - dayWidth / 2 + i * rectWidth;
-        const top = yScale.getPixelForValue(r.yEnd);
-        const bottom = yScale.getPixelForValue(r.yStart);
+      // Draw each Y group
+      yGroups.forEach(yg => {
+        const rectWidth = yg.length > 1 ? dayWidth / yg.length : dayWidth;
 
-        ctx.fillStyle = r.color;
-        ctx.fillRect(left, top, rectWidth, bottom - top);
+        yg.forEach((r, i) => {
+          const left = centerX - dayWidth / 2 + i * rectWidth;
+          const top = yScale.getPixelForValue(r.yEnd);
+          const bottom = yScale.getPixelForValue(r.yStart);
+          const height = bottom - top;
+
+          // Draw rectangle
+          ctx.fillStyle = r.color;
+          ctx.fillRect(left, top, rectWidth, height);
+
+          // Draw label if enough space
+          if (rectWidth >= 12 && height >= 12 && r.label) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(left, top, rectWidth, height);
+            ctx.clip();
+
+            const padding = 4;          // horizontal padding
+            const topPadding = 2;       // small top padding
+            const maxWidth = rectWidth - padding * 2;
+
+            ctx.fillStyle = 'white';    // text color
+
+            const lines = wrapText(ctx, r.label, maxWidth);
+            const lineHeight = 14;
+            const totalHeight = lines.length * lineHeight;
+            let y = top + topPadding + (height - totalHeight) / 2;
+
+            lines.forEach(line => {
+              ctx.fillText(line, left + padding, y);
+              y += lineHeight;
+            });
+
+            ctx.restore();
+          }
+        });
       });
     });
+
+    ctx.restore();
   }
 };
 
@@ -267,7 +257,7 @@ function drawPlot(data) {
         },
       }
     },
-    plugins: [rectanglePlugin, rectangleLabelsPlugin]
+    plugins: [rectanglePlugin]
   });
 
   myChart.$rects = rects;
