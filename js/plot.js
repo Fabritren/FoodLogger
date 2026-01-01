@@ -235,26 +235,7 @@ function drawPlot(data) {
           pan: { enabled: true, mode: 'x' },
           zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x' }
         },
-        legend: {
-          position: 'bottom',
-          onClick: function (e, legendItem, legend) {
-            // Run Chart.js default legend behavior (adds strikethrough)
-            Chart.defaults.plugins.legend.onClick.call(
-              legend,
-              e,
-              legendItem,
-              legend
-            );
-            // hiding logic
-            const label = legendItem.text;
-            myChart.$rects.forEach(r => {
-              if (r.label === label) {
-                r.hidden = !r.hidden;
-              }
-            });
-            myChart.update();
-          }
-        },
+        legend: {display: false},
       }
     },
     plugins: [rectanglePlugin]
@@ -262,4 +243,70 @@ function drawPlot(data) {
 
   myChart.$rects = rects;
   console.log("Finished setting up graph");
+
+  renderLegend(myChart);
 }
+
+function renderLegend(chart) {
+  const container = document.getElementById('legend-container');
+  container.innerHTML = '';
+
+  chart.data.datasets.forEach((ds, i) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'legend-btn';
+    btn.textContent = ds.label;
+
+    const visible = chart.isDatasetVisible(i);
+
+    // Apply dataset color
+    btn.style.background = ds.backgroundColor;
+
+    // Disabled styling
+    if (!visible) {
+      btn.classList.add('disabled');
+    }
+
+    btn.onclick = (e) => {
+      const legendItem = {
+        datasetIndex: i,
+        text: ds.label
+      };
+
+      const legend = { chart };
+
+      // Run Chart.js default legend behavior
+      Chart.defaults.plugins.legend.onClick.call(
+        legend,
+        e,
+        legendItem,
+        legend
+      );
+
+      // Sync rectangles with dataset visibility
+      const nowVisible = chart.isDatasetVisible(i);
+      myChart.$rects.forEach(r => {
+        if (r.label === ds.label) {
+          r.hidden = !nowVisible;
+        }
+      });
+
+      chart.update();
+      renderLegend(chart);
+    };
+
+    container.appendChild(btn);
+  });
+}
+
+const wrapper = document.getElementById('chart-wrapper');
+const btn = document.getElementById('maximizeBtn');
+
+btn.addEventListener('click', () => {
+  wrapper.classList.toggle('maximized');
+
+  // Resize chart after layout change
+  setTimeout(() => {
+    myChart.resize();
+  }, 50);
+});
