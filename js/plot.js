@@ -349,3 +349,27 @@ btn.addEventListener('click', () => {
     myChart.resize();
   }, 50);
 });
+
+const canvas = document.getElementById('plot');
+
+canvas.addEventListener('click', (evt) => {
+  if (!myChart || !myChart.$rects) return;
+
+  const rect = canvas.getBoundingClientRect();
+  const x = evt.clientX - rect.left;
+  const y = evt.clientY - rect.top;
+
+  for (const r of myChart.$rects) {
+    if (r.hidden || !r._hitBox) continue;
+
+    const { left, right, top, bottom } = r._hitBox;
+
+    if (x >= left && x <= right && y >= top && y <= bottom) {
+      // Rectangle clicked
+      console.log('Rectangle clicked:');
+      console.log('Text:', r.label);
+      console.log('Date:', r.date); // see step 3
+      break;
+    }
+  }
+});
