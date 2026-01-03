@@ -368,7 +368,9 @@ canvas.addEventListener('click', (evt) => {
       // Rectangle clicked
       console.log('Rectangle clicked:');
       console.log('Text:', r.label);
-      console.log('Date:', r.date); // see step 3
+      console.log('Date:', r.date);
+      showPanel('data');
+      fillTableSearch(r.label);
       break;
     }
   }
