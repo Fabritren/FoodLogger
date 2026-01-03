@@ -1,3 +1,12 @@
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function getOriginDate(data) {
+  const minTime = Math.min(...data.map(d => new Date(d.time).getTime()));
+  const origin = new Date(minTime);
+  origin.setHours(0, 0, 0, 0);
+  return origin;
+}
+
 function wrapText(ctx, text, maxWidth) {
   const words = text.split(' ');
   const lines = [];
@@ -19,10 +28,10 @@ function wrapText(ctx, text, maxWidth) {
   return lines;
 }
 
-function getDateX(date) {
+function getDateX(date, originDate) {
   const d = new Date(date);
   d.setHours(0, 0, 0, 0);
-  return d.getDate();
+  return Math.floor((d - originDate) / DAY_MS);
 }
 
 function getHourValue(date) {
@@ -134,6 +143,7 @@ function drawPlot(data) {
     myChart.destroy();
   }
 
+  const originDate = getOriginDate(data);
   const ctx = document.getElementById('plot');
 
   // Count unique labels
@@ -146,11 +156,12 @@ function drawPlot(data) {
   const rects = data.map(item => {
     const date = new Date(item.time);
     const label = item.text;
+
     return {
-      x: getDateX(date),
+      x: getDateX(date, originDate),
       yStart: getHourValue(date),
       yEnd: getHourValue(date) + 1,
-      label: label,
+      label,
       color: labelColorMap[label],
       hidden: false
     };
@@ -185,8 +196,27 @@ function drawPlot(data) {
           ticks: {
             stepSize: 0.5,
             callback: (value) => {
-              // show labels only at integers
-              return Number.isInteger(value) ? value : '';
+              if (!Number.isInteger(value)) return '';
+
+              const d = new Date(originDate.getTime() + value * DAY_MS);
+              const day = d.getDate();
+              const month = d.getMonth(); // 0 = Jan
+
+              const parts = [day];
+
+              // First day of month → add month
+              if (day === 1) {
+                parts.push(
+                  d.toLocaleDateString(undefined, { month: 'short' })
+                );
+              }
+
+              // January 1st → add year
+              if (month === 0 && day === 1) {
+                parts.push(d.getFullYear());
+              }
+
+              return parts.join(' ');
             }
           },
           afterBuildTicks(scale) {
