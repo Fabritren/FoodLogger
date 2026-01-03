@@ -103,6 +103,14 @@ const rectanglePlugin = {
           ctx.fillStyle = r.color;
           ctx.fillRect(left, top, rectWidth, height);
 
+          // Store pixel bounds for hit testing
+          r._hitBox = {
+            left,
+            right: left + rectWidth,
+            top,
+            bottom: top + height
+          };
+
           // Draw label if enough space
           if (rectWidth >= 12 && height >= 12 && r.label) {
             ctx.save();
@@ -161,7 +169,8 @@ function drawPlot(data) {
       x: getDateX(date, originDate),
       yStart: getHourValue(date),
       yEnd: getHourValue(date) + 1,
-      label,
+      label: label,
+      date: date,
       color: labelColorMap[label],
       hidden: false
     };
