@@ -56,22 +56,41 @@ function refresh(){
     buildProcessed(raw);
     drawPlot(processedTable);
     console.log('[refresh] drawPlot called with processedTable.length =', processedTable.length);
-    updateStatus(raw);
     updateQuickButtons();
     updateTable();
   });
 }
 
+const searchInput = document.getElementById('searchInput');
+const searchBtn = document.getElementById('searchBtn');
+const clearBtn = document.getElementById('clearBtn');
+
 function updateTable() {
   const tbody = document.querySelector('#dataTable tbody');
   tbody.innerHTML = '';
 
-  console.log('updateTable: fetching all entries');
+  const query = searchInput.value
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
+  console.log('updateTable: filter =', query);
 
   getAllRaw(results => {
     console.log('updateTable: received', results.length, 'entries');
 
-    results.forEach((entry, index) => {
+    results.forEach(entry => {
+      const entryTextNorm = entry.text
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+
+      // NFD-safe substring match
+      if (query && !entryTextNorm.includes(query)) {
+        return;
+      }
+
       const tr = document.createElement('tr');
       const d = new Date(entry.time);
 
@@ -93,9 +112,26 @@ function updateTable() {
       tbody.appendChild(tr);
     });
 
-    console.log('updateTable: finished rendering table with', results.length, 'items');
+    updateStatus(results);
+    console.log('updateTable: finished rendering table');
   });
 }
+
+searchBtn.onclick = () => {
+  updateTable();
+};
+
+clearBtn.onclick = () => {
+  searchInput.value = '';
+  updateTable();
+};
+
+// Optional: press Enter to search
+searchInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    updateTable();
+  }
+});
 
 function confirmDelete(key) {
   getRaw(key, entry => {
