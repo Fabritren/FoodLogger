@@ -178,3 +178,12 @@ function clearDB(cb) {
 
   return p;
 }
+
+openDB().then(()=>{
+  console.log('[openDB] resolved');
+  dt.value=new Date().toISOString().slice(0,16);
+  console.log('[openDB] dt set to', dt.value);
+  refresh();
+  console.log('[openDB] initial refresh triggered');
+  showPanel('add');
+});
