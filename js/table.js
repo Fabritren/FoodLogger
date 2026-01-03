@@ -62,14 +62,16 @@ clearBtn.onclick = () => {
   fillTableSearch('');
 };
 
-let debounceTimer;
+let debounceTimer = null;
 searchInput.addEventListener('input', () => {
-  clearTimeout(debounceTimer);
+  // cancel any previous pending update
+  if (debounceTimer) clearTimeout(debounceTimer);
+
+  // schedule a new update
   debounceTimer = setTimeout(() => {
     updateTable();
   }, 250); // wait 250ms after typing stops
 });
-
 
 function fillTableSearch(text = '') {
   searchInput.value = text;
