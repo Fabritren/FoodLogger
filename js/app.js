@@ -6,13 +6,6 @@ function showPanel(name) {
   document.getElementById('panel-' + name).hidden = false;
 }
 
-function toggleAdd(){
-  console.log('[toggleAdd] called; addSection exists:', !!window.addSection);
-  console.log('[toggleAdd] before hidden:', addSection ? addSection.hidden : undefined);
-  addSection.hidden = !addSection.hidden;
-  console.log('[toggleAdd] after hidden:', addSection.hidden);
-}
-
 function addEntry() {
   const time = dt.value;
   const value = textNewEntry.value.trim();
