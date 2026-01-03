@@ -59,8 +59,7 @@ searchBtn.onclick = () => {
 };
 
 clearBtn.onclick = () => {
-  searchInput.value = '';
-  updateTable();
+  fillTableSearch('');
 };
 
 // Optional: press Enter to search
@@ -69,6 +68,11 @@ searchInput.addEventListener('keydown', e => {
     updateTable();
   }
 });
+
+function fillTableSearch(text = '') {
+  searchInput.value = text;
+  updateTable();
+}
 
 function confirmDelete(key) {
   getRaw(key, entry => {
