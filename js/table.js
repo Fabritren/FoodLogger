@@ -62,12 +62,14 @@ clearBtn.onclick = () => {
   fillTableSearch('');
 };
 
-// Optional: press Enter to search
-searchInput.addEventListener('keydown', e => {
-  if (e.key === 'Enter') {
+let debounceTimer;
+searchInput.addEventListener('input', () => {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
     updateTable();
-  }
+  }, 250); // wait 250ms after typing stops
 });
+
 
 function fillTableSearch(text = '') {
   searchInput.value = text;
