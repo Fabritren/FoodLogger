@@ -15,7 +15,7 @@ function buildProcessed(raw) {
       .filter(Boolean)
       .map(t => ({
         time: r.time,
-        text: t.charAt(0).toUpperCase() + t.slice(1)
+        text: t.charAt(0).toUpperCase() + t.slice(1) // lower case the reamining
       }))
   );
   console.log('[buildProcessed] processedTable.length =', processedTable.length);
