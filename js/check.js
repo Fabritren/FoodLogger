@@ -6,10 +6,6 @@ async function updatePwaFooterStatusOnce() {
     window.matchMedia('(display-mode: standalone)').matches ||
     window.navigator.standalone === true;
 
-  const swControlled =
-    'serviceWorker' in navigator &&
-    !!navigator.serviceWorker.controller;
-
   const correctScope = location.pathname.startsWith('/FoodLogger/');
 
   const healthy = standalone && swControlled && correctScope;
@@ -17,7 +13,6 @@ async function updatePwaFooterStatusOnce() {
   const lines = [
     `PWA status:`,
     `Standalone: ${standalone ? 'YES' : 'NO'}`,
-    `Service Worker: ${swControlled ? 'OK' : 'NOT CONTROLLING'}`,
     `App scope: ${correctScope ? 'OK' : 'WRONG PATH'}`,
     '',
     healthy
