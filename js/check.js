@@ -33,7 +33,7 @@ async function updatePwaFooterStatus() {
   const lines = [
     `PWA status:`,
     `Standalone: ${standalone ? 'YES' : 'NO'}`,
-    `Service Worker: ${swControlled ? 'OK' : 'NOT CONTROLLING'}`,
+    `Service Worker: ${swControlled ? 'OK' : 'NOT Controlling'}`,
     `App scope: ${correctScope ? 'OK' : 'WRONG PATH'}`,
     '',
     healthy
@@ -45,14 +45,26 @@ async function updatePwaFooterStatus() {
   el.style.color = healthy ? '#0a3622' : '#8a6d3b';
 }
 
+let retryCount = 0;
+const maxRetries = 5;
+
+function safeRetryUpdate() {
+  if (retryCount >= maxRetries) return;
+  retryCount++;
+  setTimeout(() => {
+    updatePwaFooterStatus();
+    safeRetryUpdate(); // retry again if still Not Controlling
+  }, 1000);
+}
+
 // Run after page load
 window.addEventListener('load', () => {
-  setTimeout(updatePwaFooterStatus, 5000);
+  setTimeout(safeRetryUpdate, 5000);
 });
 
 // Re-check when app resumes
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
-    updatePwaFooterStatus();
+    safeRetryUpdate();
   }
 });
