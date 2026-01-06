@@ -1,7 +1,6 @@
 {
   "name": "Food Logger",
   "short_name": "Logger",
-  "start_url": "/FoodLogger/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#000000"
