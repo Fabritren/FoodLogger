@@ -47,12 +47,12 @@ async function updatePwaFooterStatus() {
 
 // Run after page load
 window.addEventListener('load', () => {
-  setTimeout(updatePwaFooterStatus, 1000);
+  setTimeout(updatePwaFooterStatus, 5000);
 });
 
 // Re-check when app resumes
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
-    setTimeout(updatePwaFooterStatus, 1000);
+    setTimeout(updatePwaFooterStatus, 5000);
   }
 });
