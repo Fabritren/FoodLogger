@@ -33,7 +33,7 @@ async function updatePwaFooterStatus() {
   const lines = [
     `PWA status:`,
     `Standalone: ${standalone ? 'YES' : 'NO'}`,
-    `Service Worker: ${swControlled ? 'OK' : 'NOT Controlling'}`,
+    `Service Worker: ${swControlled ? 'OK' : 'NOT CONTROLLING'}`,
     `App scope: ${correctScope ? 'OK' : 'WRONG PATH'}`,
     '',
     healthy
@@ -47,15 +47,36 @@ async function updatePwaFooterStatus() {
 
 let retryCount = 0;
 const maxRetries = 5;
+let retryRunning = false;
 
 function safeRetryUpdate() {
-  if (retryCount >= maxRetries) return;
-  retryCount++;
-  setTimeout(() => {
-    updatePwaFooterStatus();
-    safeRetryUpdate(); // retry again if still Not Controlling
-  }, 5000);
+  if (retryRunning || retryCount >= maxRetries) return; // prevent overlap
+  retryRunning = true;
+
+  const interval = 5000; // 1s between retries
+  const el = document.getElementById('pwaStatusLine');
+  if (!el) return;
+
+  const retryLoop = () => {
+    retryCount++;
+
+    updatePwaFooterStatus(); // update footer once
+
+    // Stop conditions
+    const swControlled =
+      'serviceWorker' in navigator &&
+      !!navigator.serviceWorker.controller;
+    if (swControlled || retryCount >= maxRetries) {
+      retryRunning = false; // allow next trigger
+      return;
+    }
+
+    setTimeout(retryLoop, interval);
+  };
+
+  retryLoop();
 }
+
 
 // Run after page load
 window.addEventListener('load', () => {
