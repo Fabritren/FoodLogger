@@ -8,7 +8,13 @@ if ('serviceWorker' in navigator) {
     });
 }
 
+let lastUpdateTime = 0;
+
 async function updatePwaFooterStatus() {
+  const now = Date.now();
+  if (now - lastUpdateTime < 1000) return; // 1s debounce
+  lastUpdateTime = now;
+
   const el = document.getElementById('pwaStatusLine');
   if (!el) return;
 
@@ -24,11 +30,10 @@ async function updatePwaFooterStatus() {
 
   const healthy = standalone && swControlled && correctScope;
 
-  // Build the status text
   const lines = [
     `PWA status:`,
     `Standalone: ${standalone ? 'YES' : 'NO'}`,
-    `Service Worker: ${swControlled ? 'OK' : 'NOT CONTROLLING'}`,
+    `Service Worker: ${swControlled ? 'OK' : 'Not Controlling'}`,
     `App scope: ${correctScope ? 'OK' : 'WRONG PATH'}`,
     '',
     healthy
@@ -39,15 +44,3 @@ async function updatePwaFooterStatus() {
   el.innerHTML = lines.join('<br>');
   el.style.color = healthy ? '#0a3622' : '#8a6d3b';
 }
-
-// Run after page load
-window.addEventListener('load', () => {
-  setTimeout(updatePwaFooterStatus, 1000);
-});
-
-// Re-check when app resumes
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') {
-    setTimeout(updatePwaFooterStatus, 1000);
-  }
-});
