@@ -8,12 +8,7 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-let updateInterval = null; // store interval ID
-const intervalTime = 5000; // 5s between retries
-let retryCount = 0;
-const maxRetries = 5;
-
-async function updatePwaFooterStatus() {
+async function updatePwaFooterStatusOnce() {
   const el = document.getElementById('pwaStatusLine');
   if (!el) return;
 
@@ -32,7 +27,7 @@ async function updatePwaFooterStatus() {
   const lines = [
     `PWA status:`,
     `Standalone: ${standalone ? 'YES' : 'NO'}`,
-    `Service Worker: ${swControlled ? 'OK' : 'NOT Controlling'}`,
+    `Service Worker: ${swControlled ? 'OK' : 'NOT CONTROLLING'}`,
     `App scope: ${correctScope ? 'OK' : 'WRONG PATH'}`,
     '',
     healthy
@@ -42,35 +37,9 @@ async function updatePwaFooterStatus() {
 
   el.innerHTML = lines.join('<br>');
   el.style.color = healthy ? '#0a3622' : '#8a6d3b';
-
-  return swControlled; // return SW status for retry logic
-}
-
-function startSafeRetry() {
-  if (updateInterval) return; // already running
-
-  retryCount = 0;
-  updateInterval = setInterval(async () => {
-    retryCount++;
-
-    const swControlled = await updatePwaFooterStatus();
-
-    // Stop interval if SW is controlling or max retries reached
-    if (swControlled || retryCount >= maxRetries) {
-      clearInterval(updateInterval);
-      updateInterval = null;
-    }
-  }, intervalTime);
 }
 
 // Run after page load
 window.addEventListener('load', () => {
-  startSafeRetry();
-});
-
-// Optional: run on app resume
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') {
-    startSafeRetry();
-  }
+  updatePwaFooterStatusOnce();
 });
