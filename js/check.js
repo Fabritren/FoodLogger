@@ -33,7 +33,7 @@ async function updatePwaFooterStatus() {
   const lines = [
     `PWA status:`,
     `Standalone: ${standalone ? 'YES' : 'NO'}`,
-    `Service Worker: ${swControlled ? 'OK' : 'Not Controlling'}`,
+    `Service Worker: ${swControlled ? 'OK' : 'NOT CONTROLLING'}`,
     `App scope: ${correctScope ? 'OK' : 'WRONG PATH'}`,
     '',
     healthy
@@ -44,3 +44,15 @@ async function updatePwaFooterStatus() {
   el.innerHTML = lines.join('<br>');
   el.style.color = healthy ? '#0a3622' : '#8a6d3b';
 }
+
+// Run after page load
+window.addEventListener('load', () => {
+  setTimeout(updatePwaFooterStatus, 1000);
+});
+
+// Re-check when app resumes
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    setTimeout(updatePwaFooterStatus, 1000);
+  }
+});
