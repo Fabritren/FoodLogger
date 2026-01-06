@@ -8,13 +8,12 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-let lastUpdateTime = 0;
+let updateInterval = null; // store interval ID
+const intervalTime = 5000; // 5s between retries
+let retryCount = 0;
+const maxRetries = 5;
 
 async function updatePwaFooterStatus() {
-  const now = Date.now();
-  if (now - lastUpdateTime < 1000) return; // 1s debounce
-  lastUpdateTime = now;
-
   const el = document.getElementById('pwaStatusLine');
   if (!el) return;
 
@@ -33,7 +32,7 @@ async function updatePwaFooterStatus() {
   const lines = [
     `PWA status:`,
     `Standalone: ${standalone ? 'YES' : 'NO'}`,
-    `Service Worker: ${swControlled ? 'OK' : 'NOT CONTROLLING'}`,
+    `Service Worker: ${swControlled ? 'OK' : 'NOT Controlling'}`,
     `App scope: ${correctScope ? 'OK' : 'WRONG PATH'}`,
     '',
     healthy
@@ -43,49 +42,35 @@ async function updatePwaFooterStatus() {
 
   el.innerHTML = lines.join('<br>');
   el.style.color = healthy ? '#0a3622' : '#8a6d3b';
+
+  return swControlled; // return SW status for retry logic
 }
 
-let retryCount = 0;
-const maxRetries = 5;
-let retryRunning = false;
+function startSafeRetry() {
+  if (updateInterval) return; // already running
 
-function safeRetryUpdate() {
-  if (retryRunning || retryCount >= maxRetries) return; // prevent overlap
-  retryRunning = true;
-
-  const interval = 5000; // 1s between retries
-  const el = document.getElementById('pwaStatusLine');
-  if (!el) return;
-
-  const retryLoop = () => {
+  retryCount = 0;
+  updateInterval = setInterval(async () => {
     retryCount++;
 
-    updatePwaFooterStatus(); // update footer once
+    const swControlled = await updatePwaFooterStatus();
 
-    // Stop conditions
-    const swControlled =
-      'serviceWorker' in navigator &&
-      !!navigator.serviceWorker.controller;
+    // Stop interval if SW is controlling or max retries reached
     if (swControlled || retryCount >= maxRetries) {
-      retryRunning = false; // allow next trigger
-      return;
+      clearInterval(updateInterval);
+      updateInterval = null;
     }
-
-    setTimeout(retryLoop, interval);
-  };
-
-  retryLoop();
+  }, intervalTime);
 }
-
 
 // Run after page load
 window.addEventListener('load', () => {
-  safeRetryUpdate(); // starts the retry loop
+  startSafeRetry();
 });
 
-// Re-check when app resumes
+// Optional: run on app resume
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
-    safeRetryUpdate();
+    startSafeRetry();
   }
 });
