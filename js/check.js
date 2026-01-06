@@ -54,12 +54,12 @@ function safeRetryUpdate() {
   setTimeout(() => {
     updatePwaFooterStatus();
     safeRetryUpdate(); // retry again if still Not Controlling
-  }, 1000);
+  }, 5000);
 }
 
 // Run after page load
 window.addEventListener('load', () => {
-  setTimeout(safeRetryUpdate, 5000);
+  safeRetryUpdate(); // starts the retry loop
 });
 
 // Re-check when app resumes
