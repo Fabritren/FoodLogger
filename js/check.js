@@ -53,6 +53,6 @@ window.addEventListener('load', () => {
 // Re-check when app resumes
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
-    setTimeout(updatePwaFooterStatus, 5000);
+    updatePwaFooterStatus();
   }
 });
