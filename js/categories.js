@@ -29,6 +29,59 @@ function setCategoryColorVisual(color) {
   }
 }
 
+// --- Compact color utilities for suggestions ---
+// Return hue (0-360) for a hex color string like '#RRGGBB', or null on failure
+function hexToHue(hex) {
+  if (!hex) return null;
+  const h = hex.replace('#', '');
+  if (h.length !== 6) return null;
+  const r = parseInt(h.substr(0,2), 16) / 255;
+  const g = parseInt(h.substr(2,2), 16) / 255;
+  const b = parseInt(h.substr(4,2), 16) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  if (max === min) return 0; // achromatic
+  const d = max - min;
+  let hue;
+  if (max === r) hue = ((g - b) / d) % 6;
+  else if (max === g) hue = ((b - r) / d) + 2;
+  else hue = ((r - g) / d) + 4;
+  hue = Math.round(hue * 60);
+  if (hue < 0) hue += 360;
+  return hue;
+}
+
+// Convert HSL to hex (kept small and self-contained)
+function hslToHex(h, s, l) {
+  s /= 100; l /= 100;
+  const k = n => (n + h / 30) % 12;
+  const a = s * Math.min(l, 1 - l);
+  const f = n => l - a * Math.max(Math.min(k(n) - 3, 9 - k(n), 1), -1);
+  const r = Math.round(255 * f(0));
+  const g = Math.round(255 * f(8));
+  const b = Math.round(255 * f(4));
+  const toHex = v => v.toString(16).padStart(2, '0');
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+function suggestCategoryColor() {
+  // Avoid colors that are too close in hue to existing categories
+  const used = categories.map(c => hexToHue(c.color)).filter(h => h !== null && !isNaN(h));
+  const golden = 137.508; // golden angle for pleasing distribution
+  for (let i = 0; i < 36; i++) {
+    const hue = (i * golden) % 360;
+    let ok = true;
+    for (const uh of used) {
+      const d = Math.abs(hue - uh);
+      const dd = Math.min(d, 360 - d);
+      if (dd < 25) { ok = false; break; } // too close
+    }
+    if (ok) return hslToHex(Math.round(hue), 70, 55);
+  }
+  // fallback
+  const fallbackHue = (categories.length * 47) % 360;
+  return hslToHex(fallbackHue, 70, 55);
+}
+
 function updateCategoriesList() {
   console.log('[updateCategoriesList] called');
   getAllCategories(cats => {
@@ -94,8 +147,10 @@ function showCategoryModal(categoryKey = null) {
     if (search) search.value = '';
     updateFoodCheckboxes([], '');
 
-    // Update color visual (input background + small preview)
-    setCategoryColorVisual('#FF6B6B');
+    // Suggest a color that doesn't clash with existing categories
+    const suggested = suggestCategoryColor();
+    setCategoryColorVisual(suggested);
+    document.getElementById('categoryColor').value = suggested;
 
     modal.style.display = 'flex';
   }
