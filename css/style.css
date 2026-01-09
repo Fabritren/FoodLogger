@@ -357,7 +357,35 @@ footer {
   border-radius: 6px;
   font-size: 1rem;
   margin-bottom: 0;
+  box-sizing: border-box;
 }
+
+/* Make color input show full-color swatch as background and be styled consistently */
+.modal input[type="color"] {
+  -webkit-appearance: none;
+  appearance: none;
+  padding: 0;
+  height: 40px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
+/* WebKit specific tweaks */
+.modal input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+.modal input[type="color"]::-webkit-color-swatch {
+  border-radius: 6px;
+  border: none;
+}
+
+/* Firefox */
+.modal input[type="color"]::-moz-color-swatch {
+  border-radius: 6px;
+  border: none;
+}
+
+
 
 .foods-checkboxes {
   display: flex;

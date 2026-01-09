@@ -2,6 +2,33 @@
 let categories = []; // cached categories
 let showCategoriesInPlot = false; // toggle between food and category view
 
+// Tracks checked foods in the modal across filtering
+let categoryModalSelectedFoods = new Set();
+
+// Helper to normalize text for accent-insensitive search
+function normalizeText(s) {
+  return (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+// Set the color visual for the color input
+function setCategoryColorVisual(color) {
+  const input = document.getElementById('categoryColor');
+  if (input) {
+    input.style.background = color;
+    // Set contrasting foreground color for readability
+    try {
+      const c = (color || '#000').replace('#', '');
+      const r = parseInt(c.substr(0,2), 16);
+      const g = parseInt(c.substr(2,2), 16);
+      const b = parseInt(c.substr(4,2), 16);
+      const lum = 0.2126*r + 0.7152*g + 0.0722*b;
+      input.style.color = lum < 128 ? '#ffffff' : '#000000';
+    } catch (err) {
+      input.style.color = '#000000';
+    }
+  }
+}
+
 function updateCategoriesList() {
   console.log('[updateCategoriesList] called');
   getAllCategories(cats => {
@@ -44,7 +71,16 @@ function showCategoryModal(categoryKey = null) {
       form.dataset.categoryKey = categoryKey;
       document.getElementById('categoryName').value = cat.name;
       document.getElementById('categoryColor').value = cat.color;
-      updateFoodCheckboxes(cat.foods || []);
+      // Initialize selected foods set so selections persist across filters
+      categoryModalSelectedFoods = new Set((cat.foods || []));
+      // Clear search and populate checkboxes
+      const search = document.getElementById('categoryFoodSearch');
+      if (search) search.value = '';
+      updateFoodCheckboxes(Array.from(categoryModalSelectedFoods), '');
+
+      // Update color visual (input background + small preview)
+      setCategoryColorVisual(cat.color);
+
       modal.style.display = 'flex';
     });
   } else {
@@ -52,21 +88,40 @@ function showCategoryModal(categoryKey = null) {
     delete form.dataset.categoryKey;
     document.getElementById('categoryName').value = '';
     document.getElementById('categoryColor').value = '#FF6B6B';
-    updateFoodCheckboxes([]);
+    // Reset selected foods
+    categoryModalSelectedFoods = new Set();
+    const search = document.getElementById('categoryFoodSearch');
+    if (search) search.value = '';
+    updateFoodCheckboxes([], '');
+
+    // Update color visual (input background + small preview)
+    setCategoryColorVisual('#FF6B6B');
+
     modal.style.display = 'flex';
   }
 }
 
-function updateFoodCheckboxes(assignedFoods = []) {
-  console.log('[updateFoodCheckboxes] called with foods:', assignedFoods);
+function updateFoodCheckboxes(assignedFoods = [], filter = '') {
+  console.log('[updateFoodCheckboxes] called with foods:', assignedFoods, 'filter:', filter);
   
   const container = document.getElementById('categoryFoodsCheckboxes');
   if (!container) return;
   
+  // If a caller supplied assignedFoods, seed the selection set
+  if (assignedFoods && assignedFoods.length) {
+    categoryModalSelectedFoods = new Set(assignedFoods);
+  }
+
   container.innerHTML = '';
   
   // Get unique food names from processedTable
-  const uniqueFoods = [...new Set(processedTable.map(e => e.text))].sort();
+  let uniqueFoods = [...new Set(processedTable.map(e => e.text))].sort();
+
+  // Apply filter using NFD normalization
+  const filterNorm = normalizeText(filter);
+  if (filterNorm) {
+    uniqueFoods = uniqueFoods.filter(f => normalizeText(f).includes(filterNorm));
+  }
   
   uniqueFoods.forEach(food => {
     const label = document.createElement('label');
@@ -75,12 +130,25 @@ function updateFoodCheckboxes(assignedFoods = []) {
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.value = food;
-    checkbox.checked = assignedFoods.includes(food);
+    checkbox.checked = categoryModalSelectedFoods.has(food);
+
+    // Update the selection set when user toggles a checkbox so selection persists
+    checkbox.addEventListener('change', (e) => {
+      if (e.target.checked) categoryModalSelectedFoods.add(food);
+      else categoryModalSelectedFoods.delete(food);
+    });
     
     label.appendChild(checkbox);
     label.appendChild(document.createTextNode(food));
     container.appendChild(label);
   });
+}
+
+function filterCategoryFoods() {
+  const filter = document.getElementById('categoryFoodSearch') ? document.getElementById('categoryFoodSearch').value : '';
+  // Preserve currently selected foods so checks are not lost when filtering
+  const checked = Array.from(document.querySelectorAll('#categoryFoodsCheckboxes input[type="checkbox"]:checked')).map(cb=>cb.value);
+  updateFoodCheckboxes(checked, filter);
 }
 
 function saveCategoryForm() {
@@ -94,9 +162,8 @@ function saveCategoryForm() {
     return;
   }
   
-  // Get selected foods
-  const foods = Array.from(document.querySelectorAll('#categoryFoodsCheckboxes input[type="checkbox"]:checked'))
-    .map(cb => cb.value);
+  // Get selected foods (persisted across filtering)
+  const foods = Array.from(categoryModalSelectedFoods);
   
   const categoryKey = document.getElementById('categoryForm').dataset.categoryKey;
   const category = { name, color, foods };
@@ -151,6 +218,21 @@ function initCategories() {
     modal.addEventListener('click', (e) => {
       if (e.target === modal) closeCategoryModal();
     });
+  }
+
+  // Set up color display: make the color input show its color as full background
+  const colorInput = document.getElementById('categoryColor');
+  if (colorInput) {
+    setCategoryColorVisual(colorInput.value);
+    colorInput.addEventListener('input', (e) => {
+      setCategoryColorVisual(e.target.value);
+    });
+  }
+
+  // Ensure search input calls the filter function (also set by inline handler)
+  const searchInput = document.getElementById('categoryFoodSearch');
+  if (searchInput) {
+    searchInput.addEventListener('input', () => filterCategoryFoods());
   }
   
   updateCategoriesList();

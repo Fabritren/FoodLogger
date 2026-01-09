@@ -132,9 +132,14 @@
       <input type="text" id="categoryName" placeholder="e.g., Breakfast" required>
       
       <label>Color</label>
-      <input type="color" id="categoryColor" value="#FF6B6B">
+      <div style="display:flex; gap:0.5rem; align-items:center;">
+        <input type="color" id="categoryColor" value="#FF6B6B">
+      </div>
       
-      <label>Assign Foods</label>
+      <label>Search</label>
+      <input type="text" id="categoryFoodSearch" placeholder="Search foods…" oninput="filterCategoryFoods()">
+
+      <label>Assign Items</label>
       <div id="categoryFoodsCheckboxes" class="foods-checkboxes"></div>
       
       <div class="modal-buttons">
