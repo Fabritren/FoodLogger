@@ -121,7 +121,7 @@ After any data modification (add, update, delete, import), always call `refresh(
 ## Common Workflows
 
 ### Adding a Feature to the Quick Buttons
-Modify `updateQuickButtons()` in [entry.js](entry.js). Note: filtering and counting already handle normalization; maintain that pattern.
+Modify `updateQuickButtons()` in [entry.js](../js/entry.js). Note: filtering and counting already handle normalization; maintain that pattern.
 
 ### Managing Categories
 - Create/edit: `showCategoryModal(categoryKey?)` opens form with food checkboxes
@@ -135,13 +135,13 @@ Call `togglePlotView('foods')` or `togglePlotView('categories')` — this sets `
 - Uses food names directly with generated HSL colors (if `showCategoriesInPlot = false`)
 
 ### Fixing a Plot Bug
-Check [plot.js](plot.js) — specifically `drawPlot()` for data transformation (including category mapping) and `rectanglePlugin` for canvas rendering. X/Y calculations are in helper functions (`getDateX()`, `getHourValue()`).
+Check [plot.js](../js/plot.js) — specifically `drawPlot()` for data transformation (including category mapping) and `rectanglePlugin` for canvas rendering. X/Y calculations are in helper functions (`getDateX()`, `getHourValue()`).
 
 ### Extending Search Capability
-Update `updateTable()` in [table.js](table.js) or `updateQuickButtons()` in [entry.js](entry.js). Remember to apply NFD normalization to both query and text being searched.
+Update `updateTable()` in [table.js](../js/table.js) or `updateQuickButtons()` in [entry.js](../js/entry.js). Remember to apply NFD normalization to both query and text being searched.
 
 ### Data Export/Import
-`exportData()` and `importData()` in [app.js](app.js) serialize/deserialize via JSON. The new export format produces an object with two top-level keys: `entries` (array of `{time, text}`) and `categories` (array of `{name, color, foods}`). Import now **clears both** the `raw` and `categories` stores before importing new data to ensure a clean state. The importer accepts the legacy array-only format (an array of entries) for backward compatibility as well as the new object format with `entries` and `categories`.
+`exportData()` and `importData()` in [app.js](../js/app.js) serialize/deserialize via JSON. The new export format produces an object with two top-level keys: `entries` (array of `{time, text}`) and `categories` (array of `{name, color, foods}`). Import now **clears both** the `raw` and `categories` stores before importing new data to ensure a clean state. The importer accepts the legacy array-only format (an array of entries) for backward compatibility as well as the new object format with `entries` and `categories`.
 
 ## Notes for Agents
 
