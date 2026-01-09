@@ -347,10 +347,13 @@ function drawPlot(data) {
   window.togglePlotLegend = function(){
     const lc = document.getElementById('legend-container');
     if (!lc) return;
-    const visible = lc.style.display !== 'none';
+    // Use computed style so this respects CSS media queries (e.g., hidden on mobile)
+    const visible = window.getComputedStyle(lc).display !== 'none';
     lc.style.display = visible ? 'none' : 'block';
     // trigger a resize so chart adapts
-    setTimeout(()=>myChart.resize(), 60);
+    setTimeout(()=>{
+      if (myChart) myChart.resize();
+    }, 60);
   };
 
   // Debounced resize on window resize for smoother mobile behavior
