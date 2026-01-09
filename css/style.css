@@ -1,3 +1,12 @@
+/* Always hide hidden panels, even with flex or height rules */
+.panel[hidden] {
+  display: none !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  max-height: 0 !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+}
 /* Entry Cards for Data Table */
 .entry-card {
   display: flex;
@@ -163,27 +172,45 @@ footer {
   font-size: 1rem;
 }
 
+/* Plot panel and chart use full viewport height on mobile, never overflow section */
 #panel-plot {
   width: 100%;
-  height: 100%;
-  position: relative; /* required for Chart.js height fill */
-}
-
-#panel-plot canvas {
-  width: 100% !important;
-  height: 100% !important;
+  max-width: 100vw;
+  box-sizing: border-box;
+  padding-bottom: 2.5rem;
+  height: 80vh;
+  max-height: 100dvh;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
 }
 
 #chart-wrapper {
   position: relative;
   width: 100%;
-  height: 700px; /* normal mode height */
+  max-width: 100vw;
+  box-sizing: border-box;
+  padding-bottom: 2.5rem;
+  height: 100%;
+  max-height: 100dvh;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+#panel-plot canvas,
+#chart-wrapper canvas {
+  width: 100% !important;
+  height: 100% !important;
+  max-height: 100dvh;
+  display: block;
 }
 
 #chart-wrapper.maximized {
   position: fixed;
   inset: 0;
-  height: 100vh;
+  height: 100dvh;
   width: 100vw;
   background: white;
   z-index: 9999;
@@ -191,14 +218,21 @@ footer {
 
 /* Mobile-friendly adjustments */
 @media (max-width: 600px) {
-  #chart-wrapper {
-    height: 50vh; /* take half viewport on small screens */
+  #panel-plot {
+    height: 100dvh;
+    max-height: 100dvh;
+    min-height: 100dvh;
+    padding: 0;
   }
-  /* hide legend by default on mobile to maximize chart area */
+  #chart-wrapper {
+    height: 100dvh;
+    max-height: 100dvh;
+    min-height: 100dvh;
+    padding: 0;
+  }
   #legend-container {
     display: none;
   }
-
   .plot-controls button {
     padding: 0.4rem 0.6rem;
     font-size: 0.85rem;
