@@ -99,50 +99,63 @@ const rectanglePlugin = {
           const bottom = yScale.getPixelForValue(r.yStart);
           const height = bottom - top;
 
-          // Draw rectangle
-          ctx.fillStyle = r.color;
-          ctx.fillRect(left, top, rectWidth, height);
-
           // Compute hitbox padding for touch devices
           const pad = Math.max(8, Math.round(8 * (window.devicePixelRatio || 1)));
 
-          // Store pixel bounds for hit testing (expanded for touch)
-          r._hitBox = {
-            left: left - pad,
-            right: left + rectWidth + pad,
-            top: top - pad,
-            bottom: top + height + pad
-          };
+          // Clip drawing to chart plotting area to prevent overflow (e.g., left axis)
+          const chartLeft = xScale.left;
+          const chartRight = xScale.right;
 
-          // Decide label drawing thresholds (larger on small screens)
-          const isMobile = window.innerWidth <= 600;
-          const minLabelWidth = isMobile ? 30 : 12;
-          const minLabelHeight = isMobile ? 18 : 12;
+          const drawLeft = Math.max(left, chartLeft);
+          const drawRight = Math.min(left + rectWidth, chartRight);
+          const drawWidth = Math.max(0, drawRight - drawLeft);
 
-          // Draw label if enough space
-          if (rectWidth >= minLabelWidth && height >= minLabelHeight && r.label) {
-            ctx.save();
-            ctx.beginPath();
-            ctx.rect(left, top, rectWidth, height);
-            ctx.clip();
+          if (drawWidth > 0 && height > 0) {
+            // Draw clipped rectangle
+            ctx.fillStyle = r.color;
+            ctx.fillRect(drawLeft, top, drawWidth, height);
 
-            const padding = 4;          // horizontal padding
-            const topPadding = 2;       // small top padding
-            const maxWidth = rectWidth - padding * 2;
+            // Store pixel bounds for hit testing (expanded for touch)
+            r._hitBox = {
+              left: drawLeft - pad,
+              right: drawLeft + drawWidth + pad,
+              top: top - pad,
+              bottom: top + height + pad
+            };
 
-            ctx.fillStyle = 'white';    // text color
+            // Decide label drawing thresholds (larger on small screens)
+            const isMobile = window.innerWidth <= 600;
+            const minLabelWidth = isMobile ? 30 : 12;
+            const minLabelHeight = isMobile ? 18 : 12;
 
-            const lines = wrapText(ctx, r.label, maxWidth);
-            const lineHeight = 14;
-            const totalHeight = lines.length * lineHeight;
-            let y = top + topPadding + (height - totalHeight) / 2;
+            // Draw label if enough space
+            if (drawWidth >= minLabelWidth && height >= minLabelHeight && r.label) {
+              ctx.save();
+              ctx.beginPath();
+              ctx.rect(drawLeft, top, drawWidth, height);
+              ctx.clip();
 
-            lines.forEach(line => {
-              ctx.fillText(line, left + padding, y);
-              y += lineHeight;
-            });
+              const padding = 4;          // horizontal padding
+              const topPadding = 2;       // small top padding
+              const maxWidth = drawWidth - padding * 2;
 
-            ctx.restore();
+              ctx.fillStyle = 'white';    // text color
+
+              const lines = wrapText(ctx, r.label, maxWidth);
+              const lineHeight = 14;
+              const totalHeight = lines.length * lineHeight;
+              let y = top + topPadding + (height - totalHeight) / 2;
+
+              lines.forEach(line => {
+                ctx.fillText(line, drawLeft + padding, y);
+                y += lineHeight;
+              });
+
+              ctx.restore();
+            }
+          } else {
+            // If rectangle is completely off-canvas, clear hitbox so it won't be tappable
+            r._hitBox = null;
           }
         });
       });
