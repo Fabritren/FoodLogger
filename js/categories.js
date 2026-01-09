@@ -101,8 +101,8 @@ function updateCategoriesList() {
             <div class="category-name">${cat.name}</div>
             <div class="category-items">${(cat.items || []).join(', ') || 'No items assigned'}</div>
           </div>
-          <button onclick="editCategory(${cat.key})" title="Edit">✏️</button>
-          <button onclick="deleteCategory(${cat.key}); updateCategoriesList(); refresh();" title="Delete">🗑️</button>
+          <button class="action-btn" onclick="editCategory(${cat.key})" title="Edit">✏️</button>
+          <button class="action-btn" onclick="deleteCategory(${cat.key}); updateCategoriesList(); refresh();" title="Delete">🗑️</button>
         `;
         container.appendChild(div);
       });

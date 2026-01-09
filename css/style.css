@@ -1,3 +1,51 @@
+/* Entry Cards for Data Table */
+.entry-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--bg);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  margin-bottom: 0.75rem;
+}
+.entry-info {
+  flex: 1;
+}
+.entry-date {
+  font-weight: bold;
+  margin-bottom: 0.25rem;
+  color: var(--accent);
+}
+.entry-items {
+  font-size: 0.95rem;
+  color: #444;
+  word-break: break-word;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+}
+.entry-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+button, .action-btn, .plot-controls button, .category-item button, .entry-actions button, .modal-buttons button, .quick-buttons button, .clear-btn, .primary, .secondary {
+  padding: 0.5rem 1rem;
+  background: var(--bg);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.2s;
+  color: inherit;
+  margin-bottom: 0.2rem;
+}
+button:hover, .action-btn:hover, .plot-controls button:hover, .category-item button:hover, .entry-actions button:hover, .modal-buttons button:hover, .quick-buttons button:hover, .clear-btn:hover, .primary:hover, .secondary:hover {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
 :root {
   --bg: #f6f7f9;
   --card: #ffffff;
@@ -58,32 +106,16 @@ input {
   width: 2.2rem;
 }
 
-.primary {
-  background: var(--accent);
-  color: white;
-  border: none;
-  padding: 0.6rem;
-  border-radius: 8px;
-  font-size: 1rem;
-}
-
+/* Quick buttons layout */
 .quick-buttons {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem; /* spacing between buttons */
+  gap: 0.5rem;
 }
-
 .quick-buttons button {
-  margin: 0.25rem;              /* gap handles spacing now */
-  padding: 0.5rem 0.75rem;   /* larger clickable area without changing text size */
-  min-width: 3rem;         /* prevents very narrow buttons */
-  min-height: 2rem;        /* ensures comfortable vertical tap target */
-  font-size: inherit;        /* do NOT reduce text size */
-  line-height: 1;            /* keeps text vertically centered */
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: transparent;
-  cursor: pointer;
+  min-width: 3rem;
+  min-height: 2rem;
+  line-height: 1;
 }
 
 .table-wrap {
@@ -116,11 +148,11 @@ footer {
   box-sizing: border-box;
 }
 
+/* Secondary button override */
 .secondary {
-  background: #eee;
-  border: 1px solid #ccc;
-  padding: 0.4rem 0.6rem;
-  border-radius: 6px;
+  background: var(--bg);
+  color: var(--accent);
+  border: 1px solid var(--border);
   margin-left: 0.3rem;
 }
 
@@ -307,8 +339,6 @@ footer {
   background: rgba(0,0,0,0.5);
   z-index: 1000;
   justify-content: center;
-  align-items: center;
-  flex-direction: column;
 }
 
 .modal-content {
@@ -441,23 +471,18 @@ footer {
   margin-top: 1.5rem;
 }
 
+/* Modal buttons layout */
 .modal-buttons button {
   flex: 1;
-  padding: 0.8rem;
-  border: none;
-  border-radius: 6px;
-  font-size: 1rem;
-  cursor: pointer;
 }
 
+/* Modal button color overrides */
 .modal-buttons .primary {
   background: var(--accent);
-  color: white;
+  color: #fff;
 }
-
 .modal-buttons .secondary {
   background: var(--bg);
-  border: 1px solid var(--border);
   color: var(--accent);
 }
 

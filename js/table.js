@@ -3,8 +3,8 @@ const searchBtn = document.getElementById('searchBtn');
 const clearBtn = document.getElementById('clearBtn');
 
 function updateTable() {
-  const tbody = document.querySelector('#dataTable tbody');
-  tbody.innerHTML = '';
+  const container = document.getElementById('dataTableCards');
+  if (container) container.innerHTML = '';
 
   const query = searchInput.value
     .trim()
@@ -28,25 +28,24 @@ function updateTable() {
         return;
       }
 
-      const tr = document.createElement('tr');
+      // Card style similar to category-item
+      const div = document.createElement('div');
+      div.className = 'entry-card';
+
       const d = new Date(entry.time);
+      const dateStr = `${d.toLocaleDateString()} ${d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}`;
 
-      tr.innerHTML = `
-        <td>
-          ${d.toLocaleDateString()} 
-          ${d.toLocaleTimeString(undefined, {
-            hour: "2-digit",
-            minute: "2-digit"
-          })}
-        </td>
-        <td>${entry.text}</td>
-        <td class="actions">
-          <button title="Edit" onclick="editEntry(${entry.key})">✏️</button>
-          <button title="Delete" onclick="confirmDelete(${entry.key})">🗑️</button>
-        </td>
+      div.innerHTML = `
+        <div class="entry-info">
+          <div class="entry-date">${dateStr}</div>
+          <div class="entry-items">${entry.text}</div>
+        </div>
+        <div class="entry-actions">
+          <button class="action-btn" title="Edit" onclick="editEntry(${entry.key})">✏️</button>
+          <button class="action-btn" title="Delete" onclick="confirmDelete(${entry.key})">🗑️</button>
+        </div>
       `;
-
-      tbody.appendChild(tr);
+      if (container) container.appendChild(div);
     });
 
     updateStatus(results);
