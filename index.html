@@ -29,7 +29,7 @@
   <!-- PLOT PANEL -->
   <section class="panel" id="panel-plot" hidden>
     <div class="plot-controls">
-      <button id="btnViewFoods" class="active" onclick="togglePlotView('foods')">Foods</button>
+      <button id="btnViewItems" class="active" onclick="togglePlotView('items')">Items</button>
       <button id="btnViewCategories" onclick="togglePlotView('categories')">Categories</button>
       <button id="toggleLegendBtn" onclick="togglePlotLegend()">Legend</button>
       <button id="resetZoomBtn" onclick="resetPlotZoom()">Reset</button>
@@ -138,11 +138,11 @@
         <input type="color" id="categoryColor" value="#FF6B6B">
       </div>
       
-      <label>Search</label>
-      <input type="text" id="categoryFoodSearch" placeholder="Search foods…" oninput="filterCategoryFoods()">
+      <label>Search items</label>
+      <input type="text" id="categoryItemSearch" placeholder="Search items…" oninput="filterCategoryItems()">
 
       <label>Assign Items</label>
-      <div id="categoryFoodsCheckboxes" class="foods-checkboxes"></div>
+      <div id="categoryItemsCheckboxes" class="items-checkboxes"></div>
       
       <div class="modal-buttons">
         <button type="submit" class="primary">Save</button>

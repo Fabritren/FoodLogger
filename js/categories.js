@@ -1,9 +1,9 @@
 // Global state for categories
 let categories = []; // cached categories
-let showCategoriesInPlot = false; // toggle between food and category view
+let showCategoriesInPlot = false; // toggle between item and category view
 
-// Tracks checked foods in the modal across filtering
-let categoryModalSelectedFoods = new Set();
+// Tracks checked items in the modal across filtering
+let categoryModalSelectedItems = new Set();
 
 // Helper to normalize text for accent-insensitive search
 function normalizeText(s) {
@@ -99,7 +99,7 @@ function updateCategoriesList() {
           <div class="category-color-box" style="background-color: ${cat.color}"></div>
           <div class="category-info">
             <div class="category-name">${cat.name}</div>
-            <div class="category-foods">${(cat.foods || []).join(', ') || 'No foods assigned'}</div>
+            <div class="category-items">${(cat.items || []).join(', ') || 'No items assigned'}</div>
           </div>
           <button onclick="editCategory(${cat.key})" title="Edit">✏️</button>
           <button onclick="deleteCategory(${cat.key}); updateCategoriesList(); refresh();" title="Delete">🗑️</button>
@@ -124,12 +124,12 @@ function showCategoryModal(categoryKey = null) {
       form.dataset.categoryKey = categoryKey;
       document.getElementById('categoryName').value = cat.name;
       document.getElementById('categoryColor').value = cat.color;
-      // Initialize selected foods set so selections persist across filters
-      categoryModalSelectedFoods = new Set((cat.foods || []));
+      // Initialize selected items set so selections persist across filters
+      categoryModalSelectedItems = new Set((cat.items || []));
       // Clear search and populate checkboxes
-      const search = document.getElementById('categoryFoodSearch');
+      const search = document.getElementById('categoryItemSearch');
       if (search) search.value = '';
-      updateFoodCheckboxes(Array.from(categoryModalSelectedFoods), '');
+      updateItemCheckboxes(Array.from(categoryModalSelectedItems), '');
 
       // Update color visual (input background + small preview)
       setCategoryColorVisual(cat.color);
@@ -141,11 +141,11 @@ function showCategoryModal(categoryKey = null) {
     delete form.dataset.categoryKey;
     document.getElementById('categoryName').value = '';
     document.getElementById('categoryColor').value = '#FF6B6B';
-    // Reset selected foods
-    categoryModalSelectedFoods = new Set();
-    const search = document.getElementById('categoryFoodSearch');
+    // Reset selected items
+    categoryModalSelectedItems = new Set();
+    const search = document.getElementById('categoryItemSearch');
     if (search) search.value = '';
-    updateFoodCheckboxes([], '');
+    updateItemCheckboxes([], '');
 
     // Suggest a color that doesn't clash with existing categories
     const suggested = suggestCategoryColor();
@@ -156,54 +156,54 @@ function showCategoryModal(categoryKey = null) {
   }
 }
 
-function updateFoodCheckboxes(assignedFoods = [], filter = '') {
-  console.log('[updateFoodCheckboxes] called with foods:', assignedFoods, 'filter:', filter);
+function updateItemCheckboxes(assignedItems = [], filter = '') {
+  console.log('[updateItemCheckboxes] called with items:', assignedItems, 'filter:', filter);
   
-  const container = document.getElementById('categoryFoodsCheckboxes');
+  const container = document.getElementById('categoryItemsCheckboxes');
   if (!container) return;
   
-  // If a caller supplied assignedFoods, seed the selection set
-  if (assignedFoods && assignedFoods.length) {
-    categoryModalSelectedFoods = new Set(assignedFoods);
+  // If a caller supplied assignedItems, seed the selection set
+  if (assignedItems && assignedItems.length) {
+    categoryModalSelectedItems = new Set(assignedItems);
   }
 
   container.innerHTML = '';
   
-  // Get unique food names from processedTable
-  let uniqueFoods = [...new Set(processedTable.map(e => e.text))].sort();
+  // Get unique item names from processedTable
+  let uniqueItems = [...new Set(processedTable.map(e => e.text))].sort();
 
   // Apply filter using NFD normalization
   const filterNorm = normalizeText(filter);
   if (filterNorm) {
-    uniqueFoods = uniqueFoods.filter(f => normalizeText(f).includes(filterNorm));
+    uniqueItems = uniqueItems.filter(f => normalizeText(f).includes(filterNorm));
   }
   
-  uniqueFoods.forEach(food => {
+  uniqueItems.forEach(item => {
     const label = document.createElement('label');
-    label.className = 'food-checkbox';
+    label.className = 'item-checkbox';
     
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
-    checkbox.value = food;
-    checkbox.checked = categoryModalSelectedFoods.has(food);
+    checkbox.value = item;
+    checkbox.checked = categoryModalSelectedItems.has(item);
 
     // Update the selection set when user toggles a checkbox so selection persists
     checkbox.addEventListener('change', (e) => {
-      if (e.target.checked) categoryModalSelectedFoods.add(food);
-      else categoryModalSelectedFoods.delete(food);
+      if (e.target.checked) categoryModalSelectedItems.add(item);
+      else categoryModalSelectedItems.delete(item);
     });
     
     label.appendChild(checkbox);
-    label.appendChild(document.createTextNode(food));
+    label.appendChild(document.createTextNode(item));
     container.appendChild(label);
   });
 }
 
-function filterCategoryFoods() {
-  const filter = document.getElementById('categoryFoodSearch') ? document.getElementById('categoryFoodSearch').value : '';
-  // Preserve currently selected foods so checks are not lost when filtering
-  const checked = Array.from(document.querySelectorAll('#categoryFoodsCheckboxes input[type="checkbox"]:checked')).map(cb=>cb.value);
-  updateFoodCheckboxes(checked, filter);
+function filterCategoryItems() {
+  const filter = document.getElementById('categoryItemSearch') ? document.getElementById('categoryItemSearch').value : '';
+  // Preserve currently selected items so checks are not lost when filtering
+  const checked = Array.from(document.querySelectorAll('#categoryItemsCheckboxes input[type="checkbox"]:checked')).map(cb=>cb.value);
+  updateItemCheckboxes(checked, filter);
 }
 
 function saveCategoryForm() {
@@ -217,11 +217,11 @@ function saveCategoryForm() {
     return;
   }
   
-  // Get selected foods (persisted across filtering)
-  const foods = Array.from(categoryModalSelectedFoods);
+  // Get selected items (persisted across filtering)
+  const items = Array.from(categoryModalSelectedItems);
   
   const categoryKey = document.getElementById('categoryForm').dataset.categoryKey;
-  const category = { name, color, foods };
+  const category = { name, color, items };
   
   if (categoryKey) {
     // Update existing
@@ -250,13 +250,13 @@ function editCategory(key) {
 function togglePlotView(viewType) {
   console.log('[togglePlotView] called with viewType', viewType);
   
-  if (viewType === 'foods') {
+  if (viewType === 'items') {
     showCategoriesInPlot = false;
-    document.getElementById('btnViewFoods').classList.add('active');
+    document.getElementById('btnViewItems').classList.add('active');
     document.getElementById('btnViewCategories').classList.remove('active');
   } else if (viewType === 'categories') {
     showCategoriesInPlot = true;
-    document.getElementById('btnViewFoods').classList.remove('active');
+    document.getElementById('btnViewItems').classList.remove('active');
     document.getElementById('btnViewCategories').classList.add('active');
   }
   
@@ -285,9 +285,9 @@ function initCategories() {
   }
 
   // Ensure search input calls the filter function (also set by inline handler)
-  const searchInput = document.getElementById('categoryFoodSearch');
+  const searchInput = document.getElementById('categoryItemSearch');
   if (searchInput) {
-    searchInput.addEventListener('input', () => filterCategoryFoods());
+    searchInput.addEventListener('input', () => filterCategoryItems());
   }
   
   updateCategoriesList();

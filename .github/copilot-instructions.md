@@ -21,7 +21,7 @@ The app separates concerns into **three data layers**: raw storage (`db.js`), UI
 
 **Category** (IndexedDB storage):
 ```javascript
-{ key: <auto-increment>, name: "Breakfast", color: "#FF6B6B", foods: ["Apple", "Banana"] }
+{ key: <auto-increment>, name: "Breakfast", color: "#FF6B6B", items: ["Apple", "Banana"] }
 ```
 
 **Rect Object** (plot visualization):
@@ -71,13 +71,13 @@ Four mutually-exclusive panels: `panel-plot`, `panel-data`, `panel-categories`, 
 - **Rectangles**: custom plugin draws colored boxes per entry, stacked horizontally if overlapping same hour
 - **Legend**: dynamically generated from unique labels with HSL color assignment (or category colors if in category mode)
 - **Toggle visibility**: dataset legend click toggles `hidden` flag
-- **View modes**: Toggle between "Foods" (individual food entries) and "Categories" (grouped by assigned categories) via `togglePlotView()`
+- **View modes**: Toggle between "Items" (individual item entries) and "Categories" (grouped by assigned categories) via `togglePlotView()`
 
 ### Categories Panel (`categories.js`)
 - **Create/Edit/Delete categories** via modal form
-- **Assign foods to categories** using checkboxes (populated from `processedTable` unique values)
+- **Assign items to categories** using checkboxes (populated from `processedTable` unique values)
 - **Color picker** for each category
-- **Category list** shows name, assigned foods, and color preview
+- **Category list** shows name, assigned items, and color preview
 - Global state: `categories[]` (cached), `showCategoriesInPlot` (toggle flag)
 
 ### Quick Buttons (`entry.js`)
@@ -124,15 +124,15 @@ After any data modification (add, update, delete, import), always call `refresh(
 Modify `updateQuickButtons()` in [entry.js](../js/entry.js). Note: filtering and counting already handle normalization; maintain that pattern.
 
 ### Managing Categories
-- Create/edit: `showCategoryModal(categoryKey?)` opens form with food checkboxes
+- Create/edit: `showCategoryModal(categoryKey?)` opens form with item checkboxes
 - Save: `saveCategoryForm()` calls `addCategory()` or `updateCategory()` and triggers `refresh()`
 - Delete: `deleteCategory(key)` removes category and triggers `refresh()`
 - Refresh list: `updateCategoriesList()` fetches and renders all categories
 
-### Toggling Plot View (Foods vs. Categories)
-Call `togglePlotView('foods')` or `togglePlotView('categories')` — this sets `showCategoriesInPlot` and calls `refresh()`. The `drawPlot()` function checks this flag and either:
-- Maps each food entry to its assigned category name (if `showCategoriesInPlot = true`)
-- Uses food names directly with generated HSL colors (if `showCategoriesInPlot = false`)
+### Toggling Plot View (Items vs. Categories)
+Call `togglePlotView('items')` or `togglePlotView('categories')` — this sets `showCategoriesInPlot` and calls `refresh()`. The `drawPlot()` function checks this flag and either:
+- Maps each item entry to its assigned category name (if `showCategoriesInPlot = true`)
+- Uses item names directly with generated HSL colors (if `showCategoriesInPlot = false`)
 
 ### Fixing a Plot Bug
 Check [plot.js](../js/plot.js) — specifically `drawPlot()` for data transformation (including category mapping) and `rectanglePlugin` for canvas rendering. X/Y calculations are in helper functions (`getDateX()`, `getHourValue()`).
@@ -141,7 +141,7 @@ Check [plot.js](../js/plot.js) — specifically `drawPlot()` for data transforma
 Update `updateTable()` in [table.js](../js/table.js) or `updateQuickButtons()` in [entry.js](../js/entry.js). Remember to apply NFD normalization to both query and text being searched.
 
 ### Data Export/Import
-`exportData()` and `importData()` in [app.js](../js/app.js) serialize/deserialize via JSON. The new export format produces an object with two top-level keys: `entries` (array of `{time, text}`) and `categories` (array of `{name, color, foods}`). Import now **clears both** the `raw` and `categories` stores before importing new data to ensure a clean state. The importer accepts the legacy array-only format (an array of entries) for backward compatibility as well as the new object format with `entries` and `categories`.
+`exportData()` and `importData()` in [app.js](../js/app.js) serialize/deserialize via JSON. The new export format produces an object with two top-level keys: `entries` (array of `{time, text}`) and `categories` (array of `{name, color, items}`). Import now **clears both** the `raw` and `categories` stores before importing new data to ensure a clean state. The importer accepts the legacy array-only format (an array of entries) for backward compatibility as well as the new object format with `entries` and `categories`.
 
 ## Notes for Agents
 

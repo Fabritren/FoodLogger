@@ -180,19 +180,19 @@ function drawPlot(data) {
   if (showCategoriesInPlot && categories && categories.length > 0) {
     console.log('[drawPlot] drawing in CATEGORY mode');
     
-    // Build a food-to-category map
-    const foodToCategoryMap = {};
+    // Build an item-to-category map
+    const itemToCategoryMap = {};
     categories.forEach(cat => {
-      (cat.foods || []).forEach(food => {
-        foodToCategoryMap[food] = { name: cat.name, color: cat.color, key: cat.key };
+      (cat.items || []).forEach(it => {
+        itemToCategoryMap[it] = { name: cat.name, color: cat.color, key: cat.key };
       });
     });
 
     // Transform data to use category labels and colors
     plotData = data.map(item => ({
       ...item,
-      text: foodToCategoryMap[item.text]?.name || item.text, // use category name or original food name
-      categoryColor: foodToCategoryMap[item.text]?.color || null
+      text: itemToCategoryMap[item.text]?.name || item.text, // use category name or original item name
+      categoryColor: itemToCategoryMap[item.text]?.color || null
     }));
 
     uniqueLabels = [...new Set(plotData.map(item => item.text))];
@@ -203,9 +203,9 @@ function drawPlot(data) {
       labelColorMap[label] = catItem ? catItem.color : generateColor(Object.keys(labelColorMap).length, uniqueLabels.length);
     });
   } else {
-    console.log('[drawPlot] drawing in FOOD mode');
+    console.log('[drawPlot] drawing in ITEM mode');
     
-    // Default food mode: generate colors
+    // Default item mode: generate colors
     uniqueLabels.forEach((label, i) => {
       labelColorMap[label] = generateColor(i, uniqueLabels.length);
     });

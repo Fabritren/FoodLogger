@@ -40,7 +40,7 @@ function exportData(){
     getAllCategories(cats=>{
       console.log('[exportData] got categories; length =', (cats||[]).length);
       const cleanEntries = raw.map(r=>({time:r.time,text:r.text}));
-      const cleanCats = (cats||[]).map(c=>({name:c.name, color:c.color, foods:c.foods || []}));
+      const cleanCats = (cats||[]).map(c=>({name:c.name, color:c.color, items:c.items || []}));
       const payload = { entries: cleanEntries, categories: cleanCats };
       const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
       const a=document.createElement('a');
@@ -83,7 +83,7 @@ function importData(input){
     console.log('[importData] parsed entries =', entries.length, 'categories =', cats.length);
 
     entries.forEach(e=>addRaw({time:e.time, text:e.text}));
-    cats.forEach(c=>addCategory({name:c.name, color:c.color, foods:c.foods || []}));
+    cats.forEach(c=>addCategory({name:c.name, color:c.color, items:c.items || []}));
 
     console.log('[importData] addRaw/addCategory called for each item');
     updateCategoriesList();

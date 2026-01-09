@@ -282,7 +282,7 @@ footer {
   margin-bottom: 0.25rem;
 }
 
-.category-foods {
+.category-items {
   font-size: 0.85rem;
   color: #666;
   overflow: hidden;
@@ -403,7 +403,7 @@ footer {
 
 
 
-.foods-checkboxes {
+.items-checkboxes {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -414,7 +414,7 @@ footer {
   border-radius: 6px;
 }
 
-.food-checkbox {
+.item-checkbox {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -424,11 +424,11 @@ footer {
   transition: background 0.2s;
 }
 
-.food-checkbox:hover {
+.item-checkbox:hover {
   background: rgba(37, 99, 235, 0.1);
 }
 
-.food-checkbox input[type="checkbox"] {
+.item-checkbox input[type="checkbox"] {
   width: auto;
   margin: 0;
   cursor: pointer;
