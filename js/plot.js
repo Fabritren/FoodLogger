@@ -103,16 +103,24 @@ const rectanglePlugin = {
           ctx.fillStyle = r.color;
           ctx.fillRect(left, top, rectWidth, height);
 
-          // Store pixel bounds for hit testing
+          // Compute hitbox padding for touch devices
+          const pad = Math.max(8, Math.round(8 * (window.devicePixelRatio || 1)));
+
+          // Store pixel bounds for hit testing (expanded for touch)
           r._hitBox = {
-            left,
-            right: left + rectWidth,
-            top,
-            bottom: top + height
+            left: left - pad,
+            right: left + rectWidth + pad,
+            top: top - pad,
+            bottom: top + height + pad
           };
 
+          // Decide label drawing thresholds (larger on small screens)
+          const isMobile = window.innerWidth <= 600;
+          const minLabelWidth = isMobile ? 30 : 12;
+          const minLabelHeight = isMobile ? 18 : 12;
+
           // Draw label if enough space
-          if (rectWidth >= 12 && height >= 12 && r.label) {
+          if (rectWidth >= minLabelWidth && height >= minLabelHeight && r.label) {
             ctx.save();
             ctx.beginPath();
             ctx.rect(left, top, rectWidth, height);
@@ -221,6 +229,10 @@ function drawPlot(data) {
   const minX = Math.min(...xValues);
   const maxX = Math.max(...xValues);
 
+  // Detect touch-capable devices and enable wheel zoom only on non-touch devices
+  const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 0);
+  const wheelEnabled = !isTouchDevice;
+
   myChart = new Chart(ctx, {
     type: 'scatter',
     data: { datasets },
@@ -303,8 +315,8 @@ function drawPlot(data) {
       },
       plugins: {
         zoom: {
-          pan: { enabled: true, mode: 'x' },
-          zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x' }
+          pan: { enabled: true, mode: 'x', threshold: 10 },
+          zoom: { wheel: { enabled: wheelEnabled }, pinch: { enabled: true }, mode: 'x' }
         },
         legend: {display: false},
       }
@@ -316,6 +328,26 @@ function drawPlot(data) {
   console.log("Finished setting up graph");
 
   renderLegend(myChart);
+
+  // Expose a small API for UI controls
+  window.resetPlotZoom = function(){ if (myChart && myChart.resetZoom) { myChart.resetZoom(); } };
+  window.togglePlotLegend = function(){
+    const lc = document.getElementById('legend-container');
+    if (!lc) return;
+    const visible = lc.style.display !== 'none';
+    lc.style.display = visible ? 'none' : 'block';
+    // trigger a resize so chart adapts
+    setTimeout(()=>myChart.resize(), 60);
+  };
+
+  // Debounced resize on window resize for smoother mobile behavior
+  let resizeTimer = null;
+  window.addEventListener('resize', () => {
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(()=>{
+      if (myChart) myChart.resize();
+    }, 120);
+  });
 }
 
 function renderLegend(chart) {
@@ -403,6 +435,31 @@ canvas.addEventListener('click', (evt) => {
       console.log('Date:', r.date);
       showPanel('data');
       fillTableSearch(r.label);
+      break;
+    }
+  }
+});
+
+// Support touch taps (touchstart) for mobile devices
+canvas.addEventListener('touchstart', (evt) => {
+  if (!myChart || !myChart.$rects) return;
+  const t = evt.touches && evt.touches[0];
+  if (!t) return;
+  const rect = canvas.getBoundingClientRect();
+  const x = t.clientX - rect.left;
+  const y = t.clientY - rect.top;
+
+  for (const r of myChart.$rects) {
+    if (r.hidden || !r._hitBox) continue;
+    const { left, right, top, bottom } = r._hitBox;
+    if (x >= left && x <= right && y >= top && y <= bottom) {
+      // Rectangle tapped
+      console.log('Rectangle tapped:');
+      console.log('Text:', r.label);
+      console.log('Date:', r.date);
+      showPanel('data');
+      fillTableSearch(r.label);
+      evt.preventDefault();
       break;
     }
   }
