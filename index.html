@@ -19,6 +19,7 @@
   <div class="right">
     <button onclick="showPanel('plot')">📊</button>
     <button onclick="showPanel('data')">🗂️</button>
+    <button onclick="showPanel('categories')">🏷️</button>
     <button onclick="showPanel('add')">➕</button>
   </div>
 </header>
@@ -27,6 +28,10 @@
 
   <!-- PLOT PANEL -->
   <section class="panel" id="panel-plot" hidden>
+    <div class="plot-controls">
+      <button id="btnViewFoods" class="active" onclick="togglePlotView('foods')">Foods</button>
+      <button id="btnViewCategories" onclick="togglePlotView('categories')">Categories</button>
+    </div>
     <div id="chart-wrapper">
       <button id="maximizeBtn">⛶</button>
       <div id="chart-layout">
@@ -64,6 +69,14 @@
         <tbody></tbody>
       </table>
     </div>
+  </section>
+
+  <!-- CATEGORIES PANEL -->
+  <section class="panel" id="panel-categories" hidden>
+    <h2>Categories</h2>
+    <button class="primary" onclick="showCategoryModal()">+ New Category</button>
+    <br><br>
+    <div id="categoriesList" class="categories-list"></div>
   </section>
 
   <!-- ADD PANEL -->
@@ -107,14 +120,39 @@
 
 <footer id="appVersionFooter">Last update: 2026-01-08</footer>
 
+<!-- Category Modal -->
+<div id="categoryModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Manage Category</h2>
+      <button class="modal-close" onclick="closeCategoryModal()">×</button>
+    </div>
+    <form id="categoryForm" onsubmit="event.preventDefault(); saveCategoryForm();">
+      <label>Category Name</label>
+      <input type="text" id="categoryName" placeholder="e.g., Breakfast" required>
+      
+      <label>Color</label>
+      <input type="color" id="categoryColor" value="#FF6B6B">
+      
+      <label>Assign Foods</label>
+      <div id="categoryFoodsCheckboxes" class="foods-checkboxes"></div>
+      
+      <div class="modal-buttons">
+        <button type="submit" class="primary">Save</button>
+        <button type="button" class="secondary" onclick="closeCategoryModal()">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.2.0/dist/chartjs-plugin-zoom.min.js"></script>
 <script src="js/db.js"></script>
+<script src="js/categories.js"></script>
 <script src="js/table.js"></script>
 <script src="js/entry.js"></script>
 <script src="js/plot.js"></script>
 <script src="js/app.js"></script>
-
 </body>
 </html>

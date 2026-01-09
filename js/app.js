@@ -37,13 +37,18 @@ function exportData(){
   console.log('[exportData] called');
   getAllRaw(raw=>{
     console.log('[exportData] got raw; length =', raw.length);
-    const clean = raw.map(r=>({time:r.time,text:r.text}));
-    const blob=new Blob([JSON.stringify(clean,null,2)],{type:'application/json'});
-    const a=document.createElement('a');
-    a.href=URL.createObjectURL(blob);
-    a.download='logger-export.json';
-    a.click();
-    console.log('[exportData] download triggered:', a.download);
+    getAllCategories(cats=>{
+      console.log('[exportData] got categories; length =', (cats||[]).length);
+      const cleanEntries = raw.map(r=>({time:r.time,text:r.text}));
+      const cleanCats = (cats||[]).map(c=>({name:c.name, color:c.color, foods:c.foods || []}));
+      const payload = { entries: cleanEntries, categories: cleanCats };
+      const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download='logger-export.json';
+      a.click();
+      console.log('[exportData] download triggered:', a.download);
+    });
   });
 }
 
@@ -55,15 +60,35 @@ function importData(input){
     return;
   }
   console.log('[importData] file selected:', f.name, 'size:', f.size);
-  clearDB(db);
-  console.log('[importData] clearDB called');
-  f.text().then(t=>{
+
+  // Clear both raw entries and categories before importing new data
+  Promise.all([clearDB(), clearCategories()]).then(()=>{
+    console.log('[importData] cleared raw and categories stores');
+    return f.text();
+  }).then(t=>{
     const parsed = JSON.parse(t);
-    console.log('[importData] parsed JSON entries =', parsed.length);
-    parsed.forEach(e=>addRaw(e));
-    console.log('[importData] addRaw called for each entry');
+    let entries = [];
+    let cats = [];
+    if (Array.isArray(parsed)) {
+      // Legacy format: top-level array of entries
+      entries = parsed;
+    } else if (parsed && typeof parsed === 'object') {
+      if (Array.isArray(parsed.entries)) entries = parsed.entries;
+      else if (Array.isArray(parsed.data)) entries = parsed.data;
+      if (Array.isArray(parsed.categories)) cats = parsed.categories;
+    } else {
+      throw new Error('Unsupported import format');
+    }
+
+    console.log('[importData] parsed entries =', entries.length, 'categories =', cats.length);
+
+    entries.forEach(e=>addRaw({time:e.time, text:e.text}));
+    cats.forEach(c=>addCategory({name:c.name, color:c.color, foods:c.foods || []}));
+
+    console.log('[importData] addRaw/addCategory called for each item');
+    updateCategoriesList();
     refresh();
-    console.log('[importData] refresh triggered after import');
+    console.log('[importData] updateCategoriesList and refresh triggered after import');
   }).catch(err=>{
     console.error('[importData] failed to parse or import file:', err);
   });
@@ -73,3 +98,5 @@ function autoGrow(el) {
   el.style.height = "auto";
   el.style.height = el.scrollHeight + "px";
 }
+
+initDB();

@@ -151,17 +151,49 @@ function drawPlot(data) {
     myChart.destroy();
   }
 
-  const originDate = getOriginDate(data);
+  // If showing categories and categories exist, transform data
+  let plotData = data;
+  let labelColorMap = {};
+  let uniqueLabels = [...new Set(data.map(item => item.text))];
+
+  if (showCategoriesInPlot && categories && categories.length > 0) {
+    console.log('[drawPlot] drawing in CATEGORY mode');
+    
+    // Build a food-to-category map
+    const foodToCategoryMap = {};
+    categories.forEach(cat => {
+      (cat.foods || []).forEach(food => {
+        foodToCategoryMap[food] = { name: cat.name, color: cat.color, key: cat.key };
+      });
+    });
+
+    // Transform data to use category labels and colors
+    plotData = data.map(item => ({
+      ...item,
+      text: foodToCategoryMap[item.text]?.name || item.text, // use category name or original food name
+      categoryColor: foodToCategoryMap[item.text]?.color || null
+    }));
+
+    uniqueLabels = [...new Set(plotData.map(item => item.text))];
+    
+    // Build color map from categories
+    uniqueLabels.forEach(label => {
+      const catItem = categories.find(c => c.name === label);
+      labelColorMap[label] = catItem ? catItem.color : generateColor(Object.keys(labelColorMap).length, uniqueLabels.length);
+    });
+  } else {
+    console.log('[drawPlot] drawing in FOOD mode');
+    
+    // Default food mode: generate colors
+    uniqueLabels.forEach((label, i) => {
+      labelColorMap[label] = generateColor(i, uniqueLabels.length);
+    });
+  }
+
+  const originDate = getOriginDate(plotData);
   const ctx = document.getElementById('plot');
 
-  // Count unique labels
-  const uniqueLabels = [...new Set(data.map(item => item.text))];
-  const labelColorMap = {};
-  uniqueLabels.forEach((label, i) => {
-    labelColorMap[label] = generateColor(i, uniqueLabels.length);
-  });
-
-  const rects = data.map(item => {
+  const rects = plotData.map(item => {
     const date = new Date(item.time);
     const label = item.text;
 
