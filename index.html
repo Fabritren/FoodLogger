@@ -34,15 +34,15 @@
       <button id="toggleLegendBtn" onclick="togglePlotLegend()">Legend</button>
       <button id="resetZoomBtn" onclick="resetPlotZoom()">Reset</button>
     </div>
-    <div id="chart-wrapper">
-      <button id="maximizeBtn">⛶</button>
-      <div id="chart-layout">
-        <div id="canvas-container">
-          <canvas id="plot"></canvas>
+      <div id="chart-wrapper">
+        <div id="chart-layout">
+          <div id="canvas-container" style="position:relative;">
+            <canvas id="plot"></canvas>
+            <button id="maximizeBtn" title="Expand plot" style="position:absolute;top:20px;left:58px;z-index:2;padding:2px 8px;font-size:18px;line-height:1.1;">⛶</button>
+          </div>
+          <div id="legend-container"></div>
         </div>
-        <div id="legend-container"></div>
       </div>
-    </div>
   </section>
 
   <!-- DATA PANEL -->
