@@ -123,10 +123,10 @@ const rectanglePlugin = {
               bottom: top + height + pad
             };
 
-            // Decide label drawing thresholds (larger on small screens)
+            // Decide label drawing thresholds (lower on mobile to show labels in smaller boxes)
             const isMobile = window.innerWidth <= 600;
-            const minLabelWidth = isMobile ? 30 : 12;
-            const minLabelHeight = isMobile ? 18 : 12;
+            const minLabelWidth = isMobile ? 16 : 12;
+            const minLabelHeight = isMobile ? 10 : 12;
 
             // Draw label if enough space
             if (drawWidth >= minLabelWidth && height >= minLabelHeight && r.label) {
