@@ -49,7 +49,7 @@ function updateTable() {
       if (container) container.appendChild(div);
     });
 
-    updateStatus(results);
+    updateStatus(filteredResults, results.length);
     console.log('updateTable: finished rendering table');
   });
 }
@@ -145,15 +145,21 @@ function discardEdit() {
   document.getElementById('discardBtn').hidden = true; // hide discard button
 }
 
-function updateStatus(raw){
-  console.log('[updateStatus] called; raw.length =', raw.length);
-  if (!raw.length) {
-    databaseStatus.innerText = 'No entries';
-    console.log('[updateStatus] set databaseStatus to "No entries"');
+function updateStatus(filteredRaw, totalCount) {
+  console.log('[updateStatus] called; filteredRaw.length =', filteredRaw.length, 'totalCount =', totalCount);
+  if (!filteredRaw.length) {
+    databaseStatus.innerText = totalCount && totalCount > 0
+      ? 'No entries match filter'
+      : 'No entries';
+    console.log('[updateStatus] set databaseStatus to', databaseStatus.innerText);
     return;
   }
-  const times = raw.map(r => new Date(r.time));
-  databaseStatus.innerText =
-    `Count: ${raw.length} | First: ${new Date(Math.min(...times)).toLocaleString()} | Last: ${new Date(Math.max(...times)).toLocaleString()}`;
+  let statusText = '';
+  if (typeof totalCount === 'number' && filteredRaw.length !== totalCount) {
+    statusText = `Showing ${filteredRaw.length} of ${totalCount} entries.`;
+  } else {
+    statusText = `Showing ${filteredRaw.length} entries.`;
+  }
+  databaseStatus.innerText = statusText;
   console.log('[updateStatus] databaseStatus set:', databaseStatus.innerText);
 }
