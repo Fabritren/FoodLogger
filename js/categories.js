@@ -191,19 +191,82 @@ function updateItemCheckboxes(assignedItems = [], filter = '') {
     checkbox.addEventListener('change', (e) => {
       if (e.target.checked) categoryModalSelectedItems.add(item);
       else categoryModalSelectedItems.delete(item);
+      updateSelectionStatus();
     });
     
     label.appendChild(checkbox);
     label.appendChild(document.createTextNode(item));
     container.appendChild(label);
   });
+  
+  updateSelectionStatus();
+}
+
+function updateSelectionStatus() {
+  const statusEl = document.getElementById('selectionStatus');
+  if (!statusEl) return;
+  
+  const allItems = [...new Set(processedTable.map(e => e.text))];
+  const selected = categoryModalSelectedItems.size;
+  const total = allItems.length;
+  
+  statusEl.textContent = `${selected}/${total} selected`;
 }
 
 function filterCategoryItems() {
   const filter = document.getElementById('categoryItemSearch') ? document.getElementById('categoryItemSearch').value : '';
-  // Preserve currently selected items so checks are not lost when filtering
-  const checked = Array.from(document.querySelectorAll('#categoryItemsCheckboxes input[type="checkbox"]:checked')).map(cb=>cb.value);
-  updateItemCheckboxes(checked, filter);
+  // Don't pass assignedItems - preserve the full selection set across filters
+  updateItemCheckboxes([], filter);
+}
+
+function selectAllFilteredItems() {
+  console.log('[selectAllFilteredItems] called');
+  // Select only currently visible checkboxes (filtered items)
+  // Hidden items (filtered out by search) retain their previous selection state
+  const checkboxes = document.querySelectorAll('#categoryItemsCheckboxes input[type="checkbox"]');
+  checkboxes.forEach(cb => {
+    cb.checked = true;
+    categoryModalSelectedItems.add(cb.value);
+  });
+  updateSelectionStatus();
+  // Note: items not in the DOM (hidden by filter) are not affected
+}
+
+function selectUnusedItems() {
+  console.log('[selectUnusedItems] called');
+  // Get all items not used by any other category
+  const currentCategoryKey = document.getElementById('categoryForm').dataset.categoryKey;
+  const usedInOtherCategories = new Set();
+  
+  categories.forEach(cat => {
+    // Skip current category if editing
+    if (currentCategoryKey && parseInt(currentCategoryKey) === cat.key) return;
+    (cat.items || []).forEach(item => usedInOtherCategories.add(item));
+  });
+  
+  // Get all unique items
+  const allItems = [...new Set(processedTable.map(e => e.text))];
+  
+  // Check items that are not used by other categories
+  const checkboxes = document.querySelectorAll('#categoryItemsCheckboxes input[type="checkbox"]');
+  checkboxes.forEach(cb => {
+    if (!usedInOtherCategories.has(cb.value)) {
+      cb.checked = true;
+      categoryModalSelectedItems.add(cb.value);
+    }
+  });
+  updateSelectionStatus();
+}
+
+function clearFilteredItems() {
+  console.log('[clearFilteredItems] called');
+  // Uncheck all currently visible checkboxes (filtered items)
+  const checkboxes = document.querySelectorAll('#categoryItemsCheckboxes input[type="checkbox"]');
+  checkboxes.forEach(cb => {
+    cb.checked = false;
+    categoryModalSelectedItems.delete(cb.value);
+  });
+  updateSelectionStatus();
 }
 
 function saveCategoryForm() {
