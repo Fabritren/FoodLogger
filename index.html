@@ -76,37 +76,48 @@
   <section class="panel" id="panel-add">
     <h2>Add entry</h2>
 
-    <label>Date and time</label>
-    <input type="datetime-local" id="dt">
+    <form id="entryForm" style="display:flex;flex-direction:column;gap:1em;" onsubmit="event.preventDefault(); addEntry();">
+      <div style="display:flex;flex-direction:column;gap:0.5em;">
+        <label for="dt">Date and time</label>
+        <input type="datetime-local" id="dt" style="width:100%;max-width:400px;">
+      </div>
 
-    <label>Text</label>
-    <div class="input-row">
-      <textarea
-        id="textNewEntry"
-        placeholder="comma separated text"
-        rows="1"
-        oninput="autoGrow(this)"
-        onfocus="this.setSelectionRange(this.value.length, this.value.length)"
-      ></textarea>
-      <button class="clear-btn" onclick="textNewEntry.value='';autoGrow(textNewEntry)">×</button>
-      <button class="primary" onclick="addEntry()">Save</button>
-      <button class="secondary" id="discardBtn" onclick="discardEdit()" hidden>Discard</button>
-    </div>
-    
-    <div class="input-row">
-      <input
-        type="text"
-        id="quickFilter"
-        placeholder="quick buttons filter ..."
-        oninput="updateQuickButtons()"
-      >
-      <button class="clear-btn" onclick="
-        this.previousElementSibling.value='';
-        updateQuickButtons();
-      ">×</button>
-    </div>
+      <div style="display:flex;flex-direction:column;gap:0.5em;">
+        <label for="textNewEntry">Text</label>
+        <div style="display:flex;align-items:stretch;gap:0.5em;">
+          <textarea
+            id="textNewEntry"
+            placeholder="comma separated text"
+            rows="1"
+            style="flex:1;resize:vertical;min-height:2.5em;"
+            oninput="autoGrow(this)"
+            onfocus="this.setSelectionRange(this.value.length, this.value.length)"
+          ></textarea>
+          <button type="button" class="clear-btn" style="align-self:flex-start;" onclick="textNewEntry.value='';autoGrow(textNewEntry)">×</button>
+        </div>
+      </div>
 
-    <div id="quickButtons" class="quick-buttons"></div>
+      <div style="display:flex;gap:0.5em;">
+        <button type="submit" class="primary" style="flex:1;">Save</button>
+        <button type="button" class="secondary" id="discardBtn" style="flex:1;" onclick="discardEdit()" hidden>Discard</button>
+      </div>
+
+      <div class="input-row" style="display:flex;align-items:center;gap:0.5em;">
+        <input
+          type="text"
+          id="quickFilter"
+          placeholder="quick buttons filter ..."
+          oninput="updateQuickButtons()"
+          style="flex:1;min-width:0;"
+        >
+        <button type="button" class="clear-btn" onclick="
+          this.previousElementSibling.value='';
+          updateQuickButtons();
+        ">×</button>
+      </div>
+
+      <div id="quickButtons" class="quick-buttons"></div>
+    </form>
   </section>
 
 </main>

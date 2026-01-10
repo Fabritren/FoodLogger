@@ -50,6 +50,7 @@ function updateQuickButtons() {
   // Create buttons with original text
   sorted.forEach(t => {
     const b = document.createElement('button');
+    b.type = 'button'; // Prevent form submission
     b.innerText = t;
     b.onclick = () => {
       console.log('[quickButton] clicked:', t);
