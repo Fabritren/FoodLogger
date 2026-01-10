@@ -171,6 +171,15 @@ function updateItemCheckboxes(assignedItems = [], filter = '') {
   
   // Get unique item names from processedTable
   let uniqueItems = [...new Set(processedTable.map(e => e.text))].sort();
+  
+  // Always include items currently assigned to this category (may no longer exist in processedTable due to rename/removal)
+  categoryModalSelectedItems.forEach(item => {
+    if (!uniqueItems.includes(item)) {
+      uniqueItems.push(item);
+    }
+  });
+  
+  uniqueItems.sort();
 
   // Apply filter using NFD normalization
   const filterNorm = normalizeText(filter);
