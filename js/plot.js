@@ -471,12 +471,8 @@ btn.addEventListener('click', () => {
 
 const canvas = document.getElementById('plot');
 
-canvas.addEventListener('click', (evt) => {
+function handleCanvasRectClick(x, y, evt) {
   if (!myChart || !myChart.$rects) return;
-
-  const rect = canvas.getBoundingClientRect();
-  const x = evt.clientX - rect.left;
-  const y = evt.clientY - rect.top;
 
   for (const r of myChart.$rects) {
     if (r.hidden || !r._hitBox) continue;
@@ -484,38 +480,35 @@ canvas.addEventListener('click', (evt) => {
     const { left, right, top, bottom } = r._hitBox;
 
     if (x >= left && x <= right && y >= top && y <= bottom) {
-      // Rectangle clicked
+      // Rectangle clicked/tapped
       console.log('Rectangle clicked:');
       console.log('Text:', r.label);
       console.log('Date:', r.date);
       showPanel('data');
       fillTableSearch(r.label);
+      
+      // Prevent default for touch events
+      if (evt && evt.preventDefault) {
+        evt.preventDefault();
+      }
       break;
     }
   }
+}
+
+canvas.addEventListener('click', (evt) => {
+  const rect = canvas.getBoundingClientRect();
+  const x = evt.clientX - rect.left;
+  const y = evt.clientY - rect.top;
+  handleCanvasRectClick(x, y, evt);
 });
 
 // Support touch taps (touchstart) for mobile devices
 canvas.addEventListener('touchstart', (evt) => {
-  if (!myChart || !myChart.$rects) return;
   const t = evt.touches && evt.touches[0];
   if (!t) return;
   const rect = canvas.getBoundingClientRect();
   const x = t.clientX - rect.left;
   const y = t.clientY - rect.top;
-
-  for (const r of myChart.$rects) {
-    if (r.hidden || !r._hitBox) continue;
-    const { left, right, top, bottom } = r._hitBox;
-    if (x >= left && x <= right && y >= top && y <= bottom) {
-      // Rectangle tapped
-      console.log('Rectangle tapped:');
-      console.log('Text:', r.label);
-      console.log('Date:', r.date);
-      showPanel('data');
-      fillTableSearch(r.label);
-      evt.preventDefault();
-      break;
-    }
-  }
+  handleCanvasRectClick(x, y, evt);
 });
