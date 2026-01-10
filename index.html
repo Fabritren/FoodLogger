@@ -34,8 +34,8 @@
             <canvas id="plot"></canvas>
             <div class="plot-controls" style="position:absolute;top:20px;left:60px;z-index:2;display:flex;gap:0.25em;flex-wrap:wrap;max-width:400px;font-size:8px;line-height:1.1;">
               <button id="maximizeBtn" title="Expand plot" style="padding:1px 4px;">⛶</button>
-              <button id="btnViewItems" onclick="togglePlotView('items')" style="padding:1px 4px;">Items</button>
-              <button id="btnViewCategories" class="active" onclick="togglePlotView('categories')" style="padding:1px 4px;">Categories</button>
+              <button id="toggleClickBtn" title="Toggle rectangle click" style="padding:1px 4px;background-color:#4CAF50;color:white;" onclick="toggleRectangleClick()">DB Search</button>
+              <button id="btnViewToggle" style="padding:1px 4px;background-color:#2196F3;color:white;" onclick="togglePlotView(showCategoriesInPlot ? 'items' : 'categories')">Categories</button>
               <button id="toggleLegendBtn" onclick="togglePlotLegend()" style="padding:1px 4px;">Legend</button>
               <button id="resetZoomBtn" onclick="resetPlotZoom()" style="padding:1px 4px;">Reset</button>
             </div>

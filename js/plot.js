@@ -471,7 +471,29 @@ btn.addEventListener('click', () => {
 
 const canvas = document.getElementById('plot');
 
+let rectangleClickEnabled = false;
+
+function toggleRectangleClick() {
+  rectangleClickEnabled = !rectangleClickEnabled;
+  const btn = document.getElementById('toggleClickBtn');
+  if (btn) {
+    btn.style.backgroundColor = rectangleClickEnabled ? '#4CAF50' : '#f44336';
+    btn.style.opacity = rectangleClickEnabled ? '1' : '0.5';
+  }
+  console.log('[toggleRectangleClick] clicks', rectangleClickEnabled ? 'enabled' : 'disabled');
+}
+
+// Initialize button color to match initial state
+(() => {
+  const btn = document.getElementById('toggleClickBtn');
+  if (btn) {
+    btn.style.backgroundColor = rectangleClickEnabled ? '#4CAF50' : '#f44336';
+    btn.style.opacity = rectangleClickEnabled ? '1' : '0.5';
+  }
+})();
+
 function handleCanvasRectClick(x, y, evt) {
+  if (!rectangleClickEnabled) return;
   if (!myChart || !myChart.$rects) return;
 
   for (const r of myChart.$rects) {

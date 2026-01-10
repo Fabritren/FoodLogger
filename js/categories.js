@@ -318,12 +318,10 @@ function togglePlotView(viewType) {
   
   if (viewType === 'items') {
     showCategoriesInPlot = false;
-    document.getElementById('btnViewItems').classList.add('active');
-    document.getElementById('btnViewCategories').classList.remove('active');
+    document.getElementById('btnViewToggle').textContent = 'Items';
   } else if (viewType === 'categories') {
     showCategoriesInPlot = true;
-    document.getElementById('btnViewItems').classList.remove('active');
-    document.getElementById('btnViewCategories').classList.add('active');
+    document.getElementById('btnViewToggle').textContent = 'Categories';
   }
   
   // Redraw the plot with new data
