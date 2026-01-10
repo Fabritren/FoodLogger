@@ -8,16 +8,46 @@ function showPanel(name) {
 
 function buildProcessed(raw) {
   console.log('[buildProcessed] called; raw.length =', raw.length);
-  processedTable = raw.flatMap(r =>
+  
+  // First pass: split all items
+  const allItems = raw.flatMap(r =>
     r.text
       .split(',')
       .map(s => s.trim())
       .filter(Boolean)
       .map(t => ({
         time: r.time,
-        text: t.charAt(0).toUpperCase() + t.slice(1) // lower case the reamining
+        text: t.charAt(0).toUpperCase() + t.slice(1) // capitalize first letter
       }))
   );
+
+  // Group by normalized text and track frequency of each variation
+  const itemsByNorm = {};
+  allItems.forEach(item => {
+    const norm = typeof normalizeText === 'function' ? normalizeText(item.text) : item.text.toLowerCase();
+    if (!itemsByNorm[norm]) {
+      itemsByNorm[norm] = { variations: {}, times: [] };
+    }
+    itemsByNorm[norm].variations[item.text] = (itemsByNorm[norm].variations[item.text] || 0) + 1;
+    itemsByNorm[norm].times.push(item.time);
+  });
+
+  // Second pass: use most frequent variation for each normalized group
+  processedTable = [];
+  Object.entries(itemsByNorm).forEach(([norm, data]) => {
+    // Find the most frequently used variation
+    const mostFrequentVariation = Object.entries(data.variations)
+      .sort((a, b) => b[1] - a[1])[0][0];
+    
+    // Add one entry per time with the most frequent variation
+    data.times.forEach(time => {
+      processedTable.push({
+        time: time,
+        text: mostFrequentVariation
+      });
+    });
+  });
+
   console.log('[buildProcessed] processedTable.length =', processedTable.length);
 }
 
