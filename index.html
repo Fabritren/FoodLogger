@@ -48,14 +48,16 @@
   <!-- DATA PANEL -->
   <section class="panel" id="panel-data" hidden>
     <h2>Database</h2>
-    <div class="table-controls">
+    <div class="table-controls" style="display:flex;align-items:center;gap:0.5em;">
       <input
         type="search"
         id="searchInput"
         placeholder="Search text…"
+        style="flex:1;min-width:0;"
+        autocomplete="off"
       />
-      <button id="searchBtn">Search</button>
-      <button id="clearBtn">Clear</button>
+      <button id="searchBtn" style="white-space:nowrap;">Search</button>
+      <button id="clearBtn" style="white-space:nowrap;">Clear</button>
     </div>
     <br>
     <label id="databaseStatus">Database status…</label><br><br>
