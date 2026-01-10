@@ -2,13 +2,15 @@ const searchInput = document.getElementById('searchInput');
 const searchBtn = document.getElementById('searchBtn');
 const clearBtn = document.getElementById('clearBtn');
 
+
+function normalizeText(str) {
+  return str.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
 function filterEntries(entries, query) {
-  const normQuery = query.trim().toLowerCase().normalize('NFD').replace(/\u0300-\u036f/g, '');
+  const normQuery = normalizeText(query);
   return entries.filter(entry => {
-    const entryTextNorm = entry.text
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/\u0300-\u036f/g, '');
+    const entryTextNorm = normalizeText(entry.text);
     if (normQuery && !entryTextNorm.includes(normQuery)) {
       return false;
     }
