@@ -28,17 +28,17 @@
 
   <!-- PLOT PANEL -->
   <section class="panel" id="panel-plot" hidden>
-    <div class="plot-controls">
-      <button id="btnViewItems" onclick="togglePlotView('items')">Items</button>
-      <button id="btnViewCategories" class="active" onclick="togglePlotView('categories')">Categories</button>
-      <button id="toggleLegendBtn" onclick="togglePlotLegend()">Legend</button>
-      <button id="resetZoomBtn" onclick="resetPlotZoom()">Reset</button>
-    </div>
       <div id="chart-wrapper">
         <div id="chart-layout">
           <div id="canvas-container" style="position:relative;">
             <canvas id="plot"></canvas>
-            <button id="maximizeBtn" title="Expand plot" style="position:absolute;top:20px;left:58px;z-index:2;padding:2px 8px;font-size:18px;line-height:1.1;">⛶</button>
+            <div class="plot-controls" style="position:absolute;top:20px;left:60px;z-index:2;display:flex;gap:0.25em;flex-wrap:wrap;max-width:400px;font-size:8px;line-height:1.1;">
+              <button id="maximizeBtn" title="Expand plot" style="padding:1px 4px;">⛶</button>
+              <button id="btnViewItems" onclick="togglePlotView('items')" style="padding:1px 4px;">Items</button>
+              <button id="btnViewCategories" class="active" onclick="togglePlotView('categories')" style="padding:1px 4px;">Categories</button>
+              <button id="toggleLegendBtn" onclick="togglePlotLegend()" style="padding:1px 4px;">Legend</button>
+              <button id="resetZoomBtn" onclick="resetPlotZoom()" style="padding:1px 4px;">Reset</button>
+            </div>
           </div>
           <div id="legend-container"></div>
         </div>
