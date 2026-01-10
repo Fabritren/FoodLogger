@@ -1,6 +1,6 @@
 // Global state for categories
 let categories = []; // cached categories
-let showCategoriesInPlot = false; // toggle between item and category view
+let showCategoriesInPlot = true; // toggle between item and category view
 
 // Tracks checked items in the modal across filtering
 let categoryModalSelectedItems = new Set();
