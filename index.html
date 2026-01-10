@@ -20,6 +20,7 @@
     <button onclick="showPanel('plot')">📊</button>
     <button onclick="showPanel('data')">🗂️</button>
     <button onclick="showPanel('categories')">🏷️</button>
+    <button onclick="showPanel('correlation')">🔗</button>
     <button onclick="showPanel('add')">➕</button>
   </div>
 </header>
@@ -70,6 +71,30 @@
     <button class="primary" onclick="showCategoryModal()">+ New Category</button>
     <br><br>
     <div id="categoriesList" class="categories-list"></div>
+  </section>
+
+  <!-- CORRELATION PANEL -->
+  <section class="panel" id="panel-correlation" hidden>
+    <h2>Correlation Analysis</h2>
+    <div style="display:flex;flex-direction:column;gap:1em;">
+      <div style="display:flex;flex-direction:column;gap:0.5em;">
+        <label for="correlationItemSelect">Select Item or Category to Analyze</label>
+        <select id="correlationItemSelect" style="width:100%;max-width:400px;">
+          <option value="">-- Choose an item or category --</option>
+        </select>
+      </div>
+
+      <div style="display:flex;gap:1em;align-items:flex-end;flex-wrap:wrap;">
+        <div style="display:flex;flex-direction:column;gap:0.5em;">
+          <label for="correlationTimeframe">Lookback Timeframe (hours)</label>
+          <input type="number" id="correlationTimeframe" min="1" max="720" value="24" style="width:120px;max-width:400px;">
+          <small style="color:#666;">How far back to analyze (1-720 hours)</small>
+        </div>
+        <button class="primary" onclick="analyzeCorrelation()">Analyze Correlation</button>
+      </div>
+
+      <div id="correlationResults" style="margin-top:1em;"></div>
+    </div>
   </section>
 
   <!-- ADD PANEL -->
@@ -172,6 +197,7 @@
 <script src="js/table.js"></script>
 <script src="js/entry.js"></script>
 <script src="js/plot.js"></script>
+<script src="js/correlation.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

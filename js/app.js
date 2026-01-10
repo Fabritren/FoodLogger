@@ -60,6 +60,7 @@ function refresh(){
     console.log('[refresh] drawPlot called with processedTable.length =', processedTable.length);
     updateQuickButtons();
     updateTable();
+    onRefreshUpdateCorrelationSelect();
   });
 }
 
