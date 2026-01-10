@@ -1,5 +1,44 @@
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+let savedPlotViewSettings = null;
+
+function getPlotViewSettings() {
+  if (!myChart) return null;
+  
+  const scales = myChart.scales;
+  if (!scales.x || !scales.y) return null;
+  
+  return {
+    xMin: scales.x.min,
+    xMax: scales.x.max,
+    yMin: scales.y.min,
+    yMax: scales.y.max
+  };
+}
+
+function setPlotViewSettings(settings) {
+  if (!settings || !myChart) return;
+  
+  const scales = myChart.scales;
+  if (!scales.x || !scales.y) return;
+  
+  // Set both the scale objects and the options
+  scales.x.min = settings.xMin;
+  scales.x.max = settings.xMax;
+  scales.y.min = settings.yMin;
+  scales.y.max = settings.yMax;
+  
+  myChart.options.scales.x.min = settings.xMin;
+  myChart.options.scales.x.max = settings.xMax;
+  myChart.options.scales.y.min = settings.yMin;
+  myChart.options.scales.y.max = settings.yMax;
+  
+  console.log('[setPlotViewSettings] set limits x:', settings.xMin, '-', settings.xMax, 'y:', settings.yMin, '-', settings.yMax);
+  
+  // Full update to force redraw
+  myChart.update();
+}
+
 function getOriginDate(data) {
   const minTime = Math.min(...data.map(d => new Date(d.time).getTime()));
   const origin = new Date(minTime);
