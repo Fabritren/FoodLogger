@@ -24,10 +24,7 @@ function updateQuickButtons() {
   console.log('[updateQuickButtons] called');
   quickButtons.innerHTML = '';
 
-  const filterNorm = quickFilter.value.trim()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
+    const filterNorm = typeof normalizeText === 'function' ? normalizeText(quickFilter.value) : quickFilter.value;
   console.log('[updateQuickButtons] filter =', filterNorm);
 
   // Count occurrences (original text, for display)
@@ -40,7 +37,7 @@ function updateQuickButtons() {
   const sorted = Object.keys(counts)
     .filter(t => {
       if (!filterNorm) return true;
-      const tNorm = t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        const tNorm = typeof normalizeText === 'function' ? normalizeText(t) : t;
       return tNorm.includes(filterNorm);
     })
     .sort((a, b) => {
