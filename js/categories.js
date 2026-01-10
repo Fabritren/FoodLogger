@@ -313,6 +313,9 @@ function editCategory(key) {
 function togglePlotView(viewType) {
   console.log('[togglePlotView] called with viewType', viewType);
   
+  // Save current view settings before redrawing
+  const savedSettings = getPlotViewSettings();
+  
   if (viewType === 'items') {
     showCategoriesInPlot = false;
     document.getElementById('btnViewItems').classList.add('active');
@@ -323,7 +326,13 @@ function togglePlotView(viewType) {
     document.getElementById('btnViewCategories').classList.add('active');
   }
   
-  refresh();
+  // Redraw the plot with new data
+  drawPlot(processedTable);
+  
+  // Restore the saved view settings
+  if (savedSettings) {
+    setPlotViewSettings(savedSettings);
+  }
 }
 
 // Initialize when page loads
