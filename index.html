@@ -133,19 +133,21 @@
       <h2>Manage Category</h2>
       <button class="modal-close" onclick="closeCategoryModal()">×</button>
     </div>
-    <form id="categoryForm" onsubmit="event.preventDefault(); saveCategoryForm();">
-      <label>Category Name</label>
-      <input type="text" id="categoryName" placeholder="e.g., Breakfast" required>
-      
-      <label>Color</label>
-      <div style="display:flex; gap:0.5rem; align-items:center;">
-        <input type="color" id="categoryColor" value="#FF6B6B">
+    <form id="categoryForm" class="modal-form-layout" onsubmit="event.preventDefault(); saveCategoryForm();">
+      <div class="modal-form-top">
+        <label>Category Name</label>
+        <input type="text" id="categoryName" placeholder="e.g., Breakfast" required>
+        
+        <label>Color</label>
+        <div style="display:flex; gap:0.5rem; align-items:center;">
+          <input type="color" id="categoryColor" value="#FF6B6B">
+        </div>
+        
+        <label>Search items</label>
+        <input type="text" id="categoryItemSearch" placeholder="Search items…" oninput="filterCategoryItems()">
       </div>
-      
-      <label>Search items</label>
-      <input type="text" id="categoryItemSearch" placeholder="Search items…" oninput="filterCategoryItems()">
 
-      <label>Assign Items</label>
+      <label class="items-label">Assign Items</label>
       <div id="categoryItemsCheckboxes" class="items-checkboxes"></div>
       
       <div class="modal-buttons">
