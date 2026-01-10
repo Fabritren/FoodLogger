@@ -270,7 +270,7 @@ function drawPlot(data) {
 
   const datasets = uniqueLabels.map(label => ({
     label: label,
-    data: [{ x: 0, y: 0 }],
+    data: [{ x: 0, y: -1 }],
     backgroundColor: labelColorMap[label],
     borderColor: labelColorMap[label],
     hidden: false
