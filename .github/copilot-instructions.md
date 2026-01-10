@@ -38,12 +38,14 @@ The app separates concerns into **three data layers**: raw storage (`db.js`), UI
 
 ## Project-Specific Patterns
 
-### 1. Text Normalization (NFD Unicode)
-Throughout the codebase (table.js, entry.js), text is normalized for international search:
+### 1. Text Normalization (NFD Unicode) & Frequency-Based Deduplication
+Throughout the codebase (table.js, entry.js, categories.js, app.js), text is normalized for international search:
 ```javascript
 .toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
 ```
 This removes diacritical marks (é → e) for accent-insensitive matching. **Always apply this when implementing search or filtering.**
+
+Additionally, `buildProcessed()` groups items by normalized text and tracks frequency of text variations. The most frequently used variation is displayed throughout the app (plot, quick buttons, category checkboxes). This ensures consistency when users enter the same item with different cases (e.g., "apple", "Apple", "APPLE" are treated as one item).
 
 ### 2. Comma-Separated Text Entry
 Users enter `"apple, banana, carrot"` in a single field. The `buildProcessed()` function splits on commas and trims whitespace. When handling text, assume it may contain comma-separated values unless explicitly single-item.
@@ -55,8 +57,11 @@ The `getAllRaw()` callback uses `store.openCursor()` to fetch all entries. Resul
 Most DB operations use callbacks (e.g., `getRaw(key, cb)`), though some return Promises (e.g., `clearRaw()`). **Maintain consistency**: new DB functions should support both callback and Promise patterns.
 
 ### 5. Global UI State Management
-- `processedTable`: Array of split entries used by plot and quick buttons
+- `processedTable`: Array of split entries (with normalized frequency-based deduplication) used by plot and quick buttons
 - `editingKey`: Non-null during edit mode; triggers "Update" button display and discard button visibility
+- `rectangleClickEnabled`: Boolean flag controlling whether rectangle clicks search the database (default: false)
+- `showCategoriesInPlot`: Boolean flag toggling between Items view and Categories view (default: true)
+- `categoryModalSelectedItems`: Set tracking user selections in category modal, persists across filter changes
 - `db`: Global IndexedDB connection (opened in `index.html` via script tag)
 
 ## UI Components
@@ -65,19 +70,25 @@ Most DB operations use callbacks (e.g., `getRaw(key, cb)`), though some return P
 Four mutually-exclusive panels: `panel-plot`, `panel-data`, `panel-categories`, `panel-add`. Use `showPanel(name)` to switch. Only one visible at a time.
 
 ### Plot Visualization (`plot.js`)
-- **Canvas-based scatter plot** using Chart.js library
+- **Canvas-based scatter plot** using Chart.js library with zoom/pan via mousewheel and pinch
 - **X-axis**: days (origin is earliest entry's date at 00:00)
 - **Y-axis**: hours (0-24)
 - **Rectangles**: custom plugin draws colored boxes per entry, stacked horizontally if overlapping same hour
 - **Legend**: dynamically generated from unique labels with HSL color assignment (or category colors if in category mode)
 - **Toggle visibility**: dataset legend click toggles `hidden` flag
-- **View modes**: Toggle between "Items" (individual item entries) and "Categories" (grouped by assigned categories) via `togglePlotView()`
+- **Rectangle click interaction**: Toggle "DB Search" button to enable/disable clicking rectangles to search the data table (default: disabled)
+- **View modes**: Toggle between "Items" (individual item entries) and "Categories" (grouped by assigned categories) via `togglePlotView()` with automatic zoom/pan state preservation
+- **Controls overlay**: Absolute-positioned buttons (Maximize, DB Search, Items/Categories toggle, Legend, Reset zoom) at top-left of canvas
+- **State preservation**: Zoom/pan settings saved before redraw and restored after view toggle using `getPlotViewSettings()` and `setPlotViewSettings()`
 
 ### Categories Panel (`categories.js`)
 - **Create/Edit/Delete categories** via modal form
-- **Assign items to categories** using checkboxes (populated from `processedTable` unique values)
-- **Color picker** for each category
+- **Assign items to categories** using checkboxes (populated from `processedTable` unique values plus any legacy assigned items no longer in the data)
+- **Color picker** for each category with automatic color suggestions avoiding hue clashes
 - **Category list** shows name, assigned items, and color preview
+- **Modal selection persistence**: Checkboxes maintain selection state across filter changes using `categoryModalSelectedItems` Set
+- **Smart filtering**: Displays both current data items and legacy assigned items so users can remove obsolete entries
+- **Quick action buttons**: "Select Filtered" (selects visible items), "Select Unused" (selects items not used in other categories), "Clear Selected" (unselects visible items)
 - Global state: `categories[]` (cached), `showCategoriesInPlot` (toggle flag)
 
 ### Quick Buttons (`entry.js`)
@@ -101,10 +112,10 @@ Direct DOM access: `textNewEntry`, `dt`, `quickFilter`, `searchInput`. These are
 ### Refresh Cycle
 After any data modification (add, update, delete, import), always call `refresh()`. This triggers:
 1. `getAllRaw()` fetch
-2. `buildProcessed()` split
-3. `drawPlot()` redraw
-4. `updateQuickButtons()` regenerate
-5. `updateTable()` refresh table
+2. `buildProcessed()` split (normalizes text, deduplicates by frequency, applies capitalization)
+3. `drawPlot()` redraw (applies category mapping if `showCategoriesInPlot = true`)
+4. `updateQuickButtons()` regenerate (filtered by `quickFilter`, sorted by frequency then alphabetically)
+5. `updateTable()` refresh table (searches normalized text)
 
 ### Edit Mode Lifecycle
 1. Click edit button → `editEntry(key)` loads entry, sets `editingKey`, shows "Update" button
@@ -124,15 +135,29 @@ After any data modification (add, update, delete, import), always call `refresh(
 Modify `updateQuickButtons()` in [entry.js](../js/entry.js). Note: filtering and counting already handle normalization; maintain that pattern.
 
 ### Managing Categories
-- Create/edit: `showCategoryModal(categoryKey?)` opens form with item checkboxes
-- Save: `saveCategoryForm()` calls `addCategory()` or `updateCategory()` and triggers `refresh()`
-- Delete: `deleteCategory(key)` removes category and triggers `refresh()`
-- Refresh list: `updateCategoriesList()` fetches and renders all categories
+- **Create**: `showCategoryModal()` with no argument opens form for new category with auto-suggested color
+- **Edit**: `showCategoryModal(categoryKey)` loads existing category; modal shows:
+  - All current data items (from `processedTable`)
+  - Legacy assigned items no longer in data (allows removal if needed)
+  - Combined list sorted alphabetically
+  - Selection persists across search filters via `categoryModalSelectedItems` Set
+- **Save**: `saveCategoryForm()` calls `addCategory()` or `updateCategory()` and triggers `refresh()`
+- **Delete**: `deleteCategory(key)` removes category and triggers `refresh()`
+- **Refresh list**: `updateCategoriesList()` fetches and renders all categories
+- **Quick actions**: `selectAllFilteredItems()`, `selectUnusedItems()`, `clearFilteredItems()` for bulk checkbox management
 
 ### Toggling Plot View (Items vs. Categories)
-Call `togglePlotView('items')` or `togglePlotView('categories')` — this sets `showCategoriesInPlot` and calls `refresh()`. The `drawPlot()` function checks this flag and either:
-- Maps each item entry to its assigned category name (if `showCategoriesInPlot = true`)
+Call `togglePlotView('items')` or `togglePlotView('categories')` — this:
+1. Saves current zoom/pan state with `getPlotViewSettings()`
+2. Sets `showCategoriesInPlot` flag
+3. Redraws plot with `drawPlot(processedTable)`
+4. Restores zoom/pan after 100ms delay using `setPlotViewSettings()`
+
+The `drawPlot()` function checks the flag and either:
+- Maps each item entry to its assigned category name and color (if `showCategoriesInPlot = true`)
 - Uses item names directly with generated HSL colors (if `showCategoriesInPlot = false`)
+
+**Note**: The 100ms delay is required to allow Chart.js to initialize scales before applying custom limits.
 
 ### Fixing a Plot Bug
 Check [plot.js](../js/plot.js) — specifically `drawPlot()` for data transformation (including category mapping) and `rectanglePlugin` for canvas rendering. X/Y calculations are in helper functions (`getDateX()`, `getHourValue()`).
