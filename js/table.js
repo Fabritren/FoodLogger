@@ -2,32 +2,33 @@ const searchInput = document.getElementById('searchInput');
 const searchBtn = document.getElementById('searchBtn');
 const clearBtn = document.getElementById('clearBtn');
 
+function filterEntries(entries, query) {
+  const normQuery = query.trim().toLowerCase().normalize('NFD').replace(/\u0300-\u036f/g, '');
+  return entries.filter(entry => {
+    const entryTextNorm = entry.text
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/\u0300-\u036f/g, '');
+    if (normQuery && !entryTextNorm.includes(normQuery)) {
+      return false;
+    }
+    return true;
+  });
+}
+
 function updateTable() {
   const container = document.getElementById('dataTableCards');
   if (container) container.innerHTML = '';
 
-  const query = searchInput.value
-    .trim()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
-
+  const query = searchInput.value;
   console.log('updateTable: filter =', query);
 
   getAllRaw(results => {
     console.log('updateTable: received', results.length, 'entries');
 
-    results.forEach(entry => {
-      const entryTextNorm = entry.text
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '');
+    const filteredResults = filterEntries(results, query);
 
-      // NFD-safe substring match
-      if (query && !entryTextNorm.includes(query)) {
-        return;
-      }
-
+    filteredResults.forEach(entry => {
       // Card style similar to category-item
       const div = document.createElement('div');
       div.className = 'entry-card';
