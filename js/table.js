@@ -142,7 +142,7 @@ function discardEdit() {
   editingKey = null;                    // cancel editing mode
   textNewEntry.value = '';                       // clear input
   autoGrow(textNewEntry);
-  dt.value = new Date().toISOString().slice(0,16); // reset to now
+  dt.value = formatDateTimeLocal(new Date()); // reset to now (local time)
   document.querySelector('#panel-add .primary').innerText = 'Save'; // restore button text
   document.getElementById('discardBtn').hidden = true; // hide discard button
 }
