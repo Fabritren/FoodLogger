@@ -5,6 +5,7 @@ function addEntry() {
   if (!time || !value) return;
 
   const entry = { time, text: value };
+  const wasEditing = editingKey !== null;
 
   if (editingKey !== null) {
     updateRaw(editingKey, entry);
@@ -18,6 +19,22 @@ function addEntry() {
   textNewEntry.value = '';
   autoGrow(textNewEntry);
   refresh();
+
+  // Show feedback message
+  showEntryFeedback(wasEditing ? 'Entry updated successfully!' : 'Entry added successfully!');
+}
+
+function showEntryFeedback(message) {
+  const feedback = document.getElementById('entryFeedback');
+  if (!feedback) return;
+  
+  feedback.innerText = message;
+  feedback.style.display = 'block';
+  
+  // Auto-hide after 2 seconds
+  setTimeout(() => {
+    feedback.style.display = 'none';
+  }, 2000);
 }
 
 function updateQuickButtons() {
