@@ -85,10 +85,13 @@
       </div>
 
       <div style="display:flex;gap:1em;align-items:flex-end;flex-wrap:wrap;">
-        <div style="display:flex;flex-direction:column;gap:0.5em;">
+        <div style="display:flex;flex-direction:column;gap:0.5em;flex:1;min-width:250px;">
           <label for="correlationTimeframe">Lookback Timeframe (hours)</label>
-          <input type="number" id="correlationTimeframe" min="1" max="720" value="24" style="width:120px;max-width:400px;">
-          <small style="color:#666;">How far back to analyze (1-720 hours)</small>
+          <input type="range" id="correlationTimeframeSlider" min="1" max="720" value="24" style="width:100%;cursor:pointer;" oninput="syncTimeframeInputs('slider')">
+          <div style="display:flex;gap:0.5em;align-items:center;">
+            <input type="number" id="correlationTimeframe" min="1" max="720" value="24" style="width:80px;padding:0.5em;font-size:0.9em;border:1px solid #ccc;border-radius:0.25em;" oninput="syncTimeframeInputs('input')">
+            <small style="color:#666;">1-720 hours</small>
+          </div>
         </div>
         <button class="primary" onclick="analyzeCorrelation()">Analyze Correlation</button>
       </div>

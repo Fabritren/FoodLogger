@@ -319,3 +319,18 @@ function onRefreshUpdateCorrelationSelect() {
   console.log('[onRefreshUpdateCorrelationSelect] called');
   populateCorrelationSelect();
 }
+
+function syncTimeframeInputs(source) {
+  const slider = document.getElementById('correlationTimeframeSlider');
+  const input = document.getElementById('correlationTimeframe');
+  
+  if (source === 'slider') {
+    input.value = slider.value;
+  } else {
+    // Clamp input to valid range
+    let value = parseInt(input.value) || 24;
+    value = Math.max(1, Math.min(720, value));
+    input.value = value;
+    slider.value = value;
+  }
+}
