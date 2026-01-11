@@ -23,7 +23,7 @@ function populateCorrelationSelect() {
   uniqueItems.forEach(item => {
     const option = document.createElement('option');
     option.value = `item:${item}`;
-    option.textContent = `🍎 ${item}`;
+    option.textContent = `📌 ${item}`;
     select.appendChild(option);
   });
 }
@@ -254,7 +254,7 @@ function displayCorrelationResults(results, targetType, targetValue, timeframeHo
     html += `
       <div style="border:1px solid #ddd;padding:1em;border-radius:0.5em;background:#fff;">
         <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:0.5em;">
-          <h4 style="margin:0;">🍎 ${corr.item}</h4>
+          <h4 style="margin:0;">📌 ${corr.item}</h4>
           <span style="background:${scoreColor};color:white;padding:0.25em 0.75em;border-radius:0.25em;font-size:0.85em;font-weight:bold;">
             ${scoreLabel} (${scorePercent}%)
           </span>
