@@ -281,8 +281,8 @@ function displayCorrelationResults(results, targetType, targetValue, timeframeHo
             ${corr.occurrences.map(occ => {
               const timeStr = occ.time.toLocaleString();
               const timing = occ.minutesBefore !== undefined 
-                ? `${occ.minutesBefore} min before`
-                : `${occ.minutesAfter} min after`;
+                ? `${formatTimingDifference(occ.minutesBefore)} before`
+                : `${formatTimingDifference(occ.minutesAfter)} after`;
               
               let bgColor, textColor, icon;
               if (occ.type === 'positive') {
@@ -318,6 +318,19 @@ function displayCorrelationResults(results, targetType, targetValue, timeframeHo
 function onRefreshUpdateCorrelationSelect() {
   console.log('[onRefreshUpdateCorrelationSelect] called');
   populateCorrelationSelect();
+}
+
+function formatTimingDifference(minutes) {
+  const days = Math.floor(minutes / (24 * 60));
+  const hours = Math.floor((minutes % (24 * 60)) / 60);
+  const mins = Math.floor(minutes % 60);
+
+  const parts = [];
+  if (days > 0) parts.push(`${days} day${days > 1 ? 's' : ''}`);
+  if (hours > 0) parts.push(`${hours} hour${hours > 1 ? 's' : ''}`);
+  if (mins > 0) parts.push(`${mins} min`);
+
+  return parts.length > 0 ? parts.join(' ') : '0 min';
 }
 
 function syncTimeframeInputs(source) {
