@@ -2,6 +2,7 @@ const searchInput = document.getElementById('searchInput');
 const searchBtn = document.getElementById('searchBtn');
 const clearBtn = document.getElementById('clearBtn');
 
+let filterByImproveableItems = false; // flag to track if filtering by improveable items
 
 function normalizeText(str) {
   return str.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -18,17 +19,104 @@ function filterEntries(entries, query) {
   });
 }
 
+function findItemsToImprove() {
+  console.log('[findItemsToImprove] analyzing processedTable for items that contain other items');
+  
+  // Get unique item texts from processedTable
+  const uniqueItems = [...new Set(processedTable.map(e => e.text))];
+  console.log('[findItemsToImprove] found', uniqueItems.length, 'unique items');
+  
+  const improveableItems = new Set();
+  
+  // For each item, check if it contains multiple other items as substrings
+  uniqueItems.forEach(item => {
+    const itemLower = item.toLowerCase();
+    
+    // Find all other items that are contained in this item
+    const containedItems = uniqueItems.filter(otherItem => {
+      if (otherItem === item) return false; // Don't compare with itself
+      
+      const otherLower = otherItem.toLowerCase();
+      return itemLower.includes(otherLower);
+    });
+    
+    // If item contains 2 or more other items, it's a candidate to be improved
+    if (containedItems.length >= 2) {
+      console.log('[findItemsToImprove] item "' + item + '" could be improved (contains items: ' + containedItems.join(', ') + ')');
+      improveableItems.add(itemLower);
+    }
+  });
+  
+  console.log('[findItemsToImprove] found', improveableItems.size, 'improveable items');
+  return improveableItems;
+}
+
+function filterByImproveableItemsToggle() {
+  console.log('[filterByImproveableItemsToggle] called, current state:', filterByImproveableItems);
+  filterByImproveableItems = !filterByImproveableItems;
+  
+  // Update button styling if it exists
+  const improveBtn = document.getElementById('improveBtn');
+  if (improveBtn) {
+    improveBtn.style.backgroundColor = filterByImproveableItems ? '#FFC107' : '';
+    improveBtn.style.opacity = filterByImproveableItems ? '1' : '0.7';
+  }
+  
+  updateTable();
+}
+
+function clearImproveFilter() {
+  console.log('[clearImproveFilter] called');
+  filterByImproveableItems = false;
+  const improveBtn = document.getElementById('improveBtn');
+  if (improveBtn) {
+    improveBtn.style.backgroundColor = '';
+    improveBtn.style.opacity = '0.7';
+  }
+  updateTable();
+}
+
+function filterEntries(entries, query, applyImproveFilter = false) {
+  const normQuery = normalizeText(query);
+  let improveableItems = null;
+  
+  if (applyImproveFilter) {
+    improveableItems = findItemsToImprove();
+  }
+  
+  return entries.filter(entry => {
+    const entryTextNorm = normalizeText(entry.text);
+    
+    // Apply search query filter
+    if (normQuery && !entryTextNorm.includes(normQuery)) {
+      return false;
+    }
+    
+    // Apply improveable items filter
+    if (applyImproveFilter && improveableItems) {
+      // Split entry text by commas and check if any item is improveable
+      const entryItems = entry.text.split(',').map(s => s.trim().toLowerCase());
+      const hasImproveableItem = entryItems.some(item => improveableItems.has(item));
+      if (!hasImproveableItem) {
+        return false;
+      }
+    }
+    
+    return true;
+  });
+}
+
 function updateTable() {
   const container = document.getElementById('dataTableCards');
   if (container) container.innerHTML = '';
 
   const query = searchInput.value;
-  console.log('updateTable: filter =', query);
+  console.log('updateTable: filter =', query, 'improveFilter =', filterByImproveableItems);
 
   getAllRaw(results => {
     console.log('updateTable: received', results.length, 'entries');
 
-    const filteredResults = filterEntries(results, query);
+    const filteredResults = filterEntries(results, query, filterByImproveableItems);
 
     filteredResults.forEach(entry => {
       // Card style similar to category-item
@@ -62,6 +150,7 @@ searchBtn.onclick = () => {
 
 clearBtn.onclick = () => {
   fillTableSearch('');
+  clearImproveFilter();
 };
 
 let debounceTimer = null;
