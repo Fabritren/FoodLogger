@@ -404,8 +404,8 @@ footer {
   box-shadow: 0 10px 40px rgba(0,0,0,0.2);
   width: 90%;
   max-width: 600px;
-  height: 85vh;
-  max-height: 85vh;
+  height: 95vh;
+  max-height: 95vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
