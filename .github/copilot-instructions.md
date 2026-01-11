@@ -67,7 +67,12 @@ Most DB operations use callbacks (e.g., `getRaw(key, cb)`), though some return P
 ## UI Components
 
 ### Panel System (`app.js`)
-Four mutually-exclusive panels: `panel-plot`, `panel-data`, `panel-categories`, `panel-add`. Use `showPanel(name)` to switch. Only one visible at a time.
+Five mutually-exclusive panels: `panel-plot`, `panel-data`, `panel-categories`, `panel-correlation`, `panel-add`. Use `showPanel(name)` to switch. Only one visible at a time.
+- **panel-plot**: Scatter plot visualization of entries over time
+- **panel-data**: Table/card view with search and filter capabilities
+- **panel-categories**: Manage categories and assign items to them
+- **panel-correlation**: Analyze temporal patterns and correlations between items
+- **panel-add**: Add or edit food entries with quick button suggestions
 
 ### Plot Visualization (`plot.js`)
 - **Canvas-based scatter plot** using Chart.js library with zoom/pan via mousewheel and pinch
@@ -100,6 +105,21 @@ Four mutually-exclusive panels: `panel-plot`, `panel-data`, `panel-categories`, 
 - NFD-normalized substring matching
 - Debounced input (250ms) to avoid excessive updates
 - Edit/delete actions via buttons in action column
+
+### Correlation Analysis (`correlation.js`)
+- **Purpose**: Identify temporal patterns and correlations between items (e.g., which items appear near target items)
+- **Data structure**: Analyzes relative timing of items; for each target item/category occurrence, examines what appeared before/after
+- **Lookback window**: Configurable timeframe (1-720 hours) for correlation analysis
+- **Selection persistence**: `onRefreshUpdateCorrelationSelect()` regenerates dropdown after data changes (called in `refresh()` cycle)
+- **Supported analyses**: 
+  - Individual items (selected as `item:<name>`)
+  - Categories (selected as `category:<key>`)
+- **Result scoring**: Positive correlation (item appears near target), negative correlation (item avoids target), neutral baseline
+- **Functions**:
+  - `populateCorrelationSelect()`: Populates dropdown with unique items + all categories from `processedTable` and `categories[]`
+  - `analyzeCorrelation()`: Main handler; parses select value and calls `performCorrelationAnalysis()`
+  - `performCorrelationAnalysis(rawEntries, targetType, targetValue, timeframeHours)`: Core analysis logic
+  - `displayCorrelationResults(results, targetType, targetValue, timeframeHours)`: Renders ranked correlation list with frequency badges
 
 ## Development Patterns
 
@@ -167,6 +187,18 @@ Update `updateTable()` in [table.js](../js/table.js) or `updateQuickButtons()` i
 
 ### Data Export/Import
 `exportData()` and `importData()` in [app.js](../js/app.js) serialize/deserialize via JSON. The new export format produces an object with two top-level keys: `entries` (array of `{time, text}`) and `categories` (array of `{name, color, items}`). Import now **clears both** the `raw` and `categories` stores before importing new data to ensure a clean state. The importer accepts the legacy array-only format (an array of entries) for backward compatibility as well as the new object format with `entries` and `categories`.
+
+### Analyzing Temporal Correlations
+Call `analyzeCorrelation()` in [correlation.js](../js/correlation.js) after user selects an item/category and timeframe:
+1. `populateCorrelationSelect()` updates dropdown with items from `processedTable` and categories from `categories[]`
+2. User selects target and sets lookback hours (1-720)
+3. `analyzeCorrelation()` calls `performCorrelationAnalysis()` which:
+   - Flattens raw entries into individual items (split by comma, capitalized)
+   - Finds all occurrences of target item/category (normalized text comparison)
+   - For each target occurrence, scans backward/forward within timeframe window
+   - Tallies positive/negative/neutral correlations with other items
+4. `displayCorrelationResults()` renders ranked list sorted by correlation strength
+5. Remember to call `onRefreshUpdateCorrelationSelect()` whenever `refresh()` completes to keep dropdown in sync
 
 ## Notes for Agents
 
