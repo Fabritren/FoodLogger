@@ -46,38 +46,26 @@ function analyzeCorrelation() {
 
   console.log('[analyzeCorrelation] analyzing', targetType, ':', targetItem, 'with', timeframeHours, 'hour lookback');
 
-  // Get all raw entries sorted by time
-  getAllRaw(rawEntries => {
-    const results = performCorrelationAnalysis(rawEntries, targetType, targetItem, timeframeHours);
-    displayCorrelationResults(results, targetType, targetItem, timeframeHours);
-  });
+  // Use processedTable which is already split, capitalized, and normalized
+  const results = performCorrelationAnalysis(processedTable, targetType, targetItem, timeframeHours);
+  displayCorrelationResults(results, targetType, targetItem, timeframeHours);
 }
 
-function performCorrelationAnalysis(rawEntries, targetType, targetValue, timeframeHours = 24) {
-  console.log('[performCorrelationAnalysis] analyzing', rawEntries.length, 'entries with', timeframeHours, 'hour lookback');
+function performCorrelationAnalysis(processedItems, targetType, targetValue, timeframeHours = 24) {
+  console.log('[performCorrelationAnalysis] analyzing', processedItems.length, 'items with', timeframeHours, 'hour lookback');
 
-  // Sort entries by time
-  const sorted = [...rawEntries].sort((a, b) => new Date(a.time) - new Date(b.time));
-
-  // Parse all entries into flat list with individual items
-  const allItems = [];
-  sorted.forEach(entry => {
-    const items = entry.text.split(',').map(s => s.trim()).filter(Boolean);
-    items.forEach(text => {
-      allItems.push({
-        text: text.charAt(0).toUpperCase() + text.slice(1),
-        time: new Date(entry.time),
-        rawTime: entry.time
-      });
-    });
-  });
+  // processedItems is already split, capitalized, and processed from buildProcessed()
+  const allItems = processedItems.map(item => ({
+    text: item.text,
+    time: new Date(item.time)
+  }));
 
   // Find all occurrences of target item/category
   const targetOccurrences = [];
   if (targetType === 'item') {
     allItems.forEach((item, idx) => {
       if (normalizeText(item.text) === normalizeText(targetValue)) {
-        targetOccurrences.push({ index: idx, item, allItems });
+        targetOccurrences.push({ index: idx, item });
       }
     });
   } else if (targetType === 'category') {
@@ -86,7 +74,7 @@ function performCorrelationAnalysis(rawEntries, targetType, targetValue, timefra
     if (category && category.items) {
       allItems.forEach((item, idx) => {
         if (category.items.some(ci => normalizeText(ci) === normalizeText(item.text))) {
-          targetOccurrences.push({ index: idx, item, allItems });
+          targetOccurrences.push({ index: idx, item });
         }
       });
     }
@@ -135,8 +123,8 @@ function performCorrelationAnalysis(rawEntries, targetType, targetValue, timefra
     const minutesDiff = timeDiff / (60 * 1000);
 
     // Determine correlation type based on timing relative to closest target
-    if (timeDiff > 0 && timeDiff <= thresholdMs) {
-      // Item appears before target within threshold → likely cause
+    if (timeDiff >= 0 && timeDiff <= thresholdMs) {
+      // Item appears before or at same time as target within threshold → likely cause
       correlationMap[itemText].positive++;
       correlationMap[itemText].occurrences.push({
         time: item.time,
@@ -189,8 +177,11 @@ function performCorrelationAnalysis(rawEntries, targetType, targetValue, timefra
     });
   });
 
-  // Sort by correlation score (strongest positive first)
-  correlationScores.sort((a, b) => b.score - a.score);
+  // Sort by correlation score (strongest positive first), then alphabetically by item name
+  correlationScores.sort((a, b) => {
+    const scoreDiff = b.score - a.score;
+    return scoreDiff !== 0 ? scoreDiff : a.item.localeCompare(b.item);
+  });
 
   return {
     targetOccurrences: targetOccurrences.length,
@@ -243,9 +234,17 @@ function displayCorrelationResults(results, targetType, targetValue, timeframeHo
   html += '<div style="display:flex;flex-direction:column;gap:1em;">';
 
   results.correlations.forEach(corr => {
-    const scorePercent = ((corr.score + 1) / 2 * 100).toFixed(0); // normalize -1..1 to 0..100
-    const scoreColor = corr.score > 0.2 ? '#4CAF50' : corr.score < -0.2 ? '#f44336' : '#FFC107';
-    const scoreLabel = corr.score > 0.2 ? 'Likely cause' : corr.score < -0.2 ? 'Unlikely cause' : 'Neutral';
+    let scorePercent, scoreColor, scoreLabel;
+    
+    if (isNaN(corr.score) || corr.total === 0) {
+      scorePercent = '--';
+      scoreColor = '#999';
+      scoreLabel = 'Outside timeframe';
+    } else {
+      scorePercent = ((corr.score + 1) / 2 * 100).toFixed(0); // normalize -1..1 to 0..100
+      scoreColor = corr.score > 0.2 ? '#4CAF50' : corr.score < -0.2 ? '#f44336' : '#FFC107';
+      scoreLabel = corr.score > 0.2 ? 'Likely cause' : corr.score < -0.2 ? 'Unlikely cause' : 'Neutral';
+    }
 
     // Create a bar chart visualization
     const maxCount = Math.max(...results.correlations.map(c => c.total));
