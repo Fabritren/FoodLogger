@@ -113,10 +113,31 @@ function importData(input){
 
     console.log('[importData] parsed entries =', entries.length, 'categories =', cats.length);
 
+    // Add all entries first
     entries.forEach(e=>addRaw({time:e.time, text:e.text}));
-    cats.forEach(c=>addCategory({name:c.name, color:c.color, items:c.items || []}));
+    
+    // Add all categories and wait for them to complete
+    const categoryPromises = cats.map(c => {
+      return new Promise(resolve => {
+        const tx = db.transaction('categories', 'readwrite');
+        const store = tx.objectStore('categories');
+        const req = store.add({name: c.name, color: c.color, items: c.items || []});
+        
+        tx.oncomplete = () => {
+          console.log('[importData] category saved:', c.name);
+          resolve();
+        };
+        tx.onerror = () => {
+          console.error('[importData] error saving category:', c.name, tx.error);
+          resolve();
+        };
+      });
+    });
 
-    console.log('[importData] addRaw/addCategory called for each item');
+    console.log('[importData] waiting for categories to be saved');
+    return Promise.all(categoryPromises);
+  }).then(() => {
+    console.log('[importData] all categories saved, updating lists');
     updateCategoriesList();
     refresh();
     console.log('[importData] updateCategoriesList and refresh triggered after import');
