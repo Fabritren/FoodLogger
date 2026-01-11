@@ -8,15 +8,6 @@ function populateCorrelationSelect() {
 
   select.innerHTML = '<option value="">-- Choose an item or category --</option>';
 
-  // Add items from processedTable
-  const uniqueItems = [...new Set(processedTable.map(e => e.text))].sort();
-  uniqueItems.forEach(item => {
-    const option = document.createElement('option');
-    option.value = `item:${item}`;
-    option.textContent = `🍎 ${item}`;
-    select.appendChild(option);
-  });
-
   // Add categories
   if (categories && categories.length > 0) {
     categories.forEach(cat => {
@@ -26,6 +17,15 @@ function populateCorrelationSelect() {
       select.appendChild(option);
     });
   }
+
+  // Add items from processedTable
+  const uniqueItems = [...new Set(processedTable.map(e => e.text))].sort();
+  uniqueItems.forEach(item => {
+    const option = document.createElement('option');
+    option.value = `item:${item}`;
+    option.textContent = `🍎 ${item}`;
+    select.appendChild(option);
+  });
 }
 
 function analyzeCorrelation() {
