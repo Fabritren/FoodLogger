@@ -107,12 +107,12 @@
         <h4 style="margin:1em 0 0.5em 0;color:#1976D2;">Analysis Steps</h4>
         <ol style="margin:0.5em 0;padding-left:1.5em;">
           <li><strong>Find all occurrences:</strong> The algorithm finds every instance of your selected item or category in the database.</li>
-          <li><strong>Look back in time:</strong> For each occurrence, it examines all items eaten within the lookback timeframe (1-720 hours).</li>
-          <li><strong>Calculate correlation scores:</strong> Items are scored based on their timing relative to your target:
+          <li><strong>Single correlation per item:</strong> Each item in your data is evaluated relative to its <strong>closest target occurrence</strong> (by time distance). This prevents items between close target occurrences from being double-counted.</li>
+          <li><strong>Score based on timing:</strong> Items are scored according to their timing relative to their nearest target:
             <ul style="margin:0.5em 0;padding-left:1.5em;">
-              <li><strong>Positive correlation:</strong> Items eaten within ~3 hours (or half the timeframe) before the target—likely contributing factors.</li>
-              <li><strong>Neutral correlation:</strong> Items eaten within the full lookback window but beyond the threshold—weak or indirect relationships.</li>
-              <li><strong>Negative correlation:</strong> Items eaten after the target—suggests they don't prevent or cause the target.</li>
+              <li><strong>Positive correlation:</strong> Items appearing <strong>before</strong> the target within ~3 hours (or half the timeframe)—likely contributing factors.</li>
+              <li><strong>Neutral correlation:</strong> Items appearing <strong>before</strong> the target but beyond the threshold—weak or indirect relationships.</li>
+              <li><strong>Negative correlation:</strong> Items appearing <strong>after</strong> the target (any distance within lookback)—cannot be causes, so they lower the correlation score.</li>
             </ul>
           </li>
           <li><strong>Rank results:</strong> Items are ranked by a correlation score from -1 (unlikely cause) to +1 (likely cause), calculated as: <code style="background:#e0e0e0;padding:0.2em 0.4em;border-radius:0.25em;font-family:monospace;">positive_ratio - negative_ratio</code></li>
@@ -125,7 +125,7 @@
           <span style="display:inline-block;background:#FFC107;color:#000;padding:0.25em 0.75em;border-radius:0.25em;margin-right:0.5em;font-size:0.9em;font-weight:bold;">~ Neutral</span> (score ≈ 0-20%): Mixed correlation—relationship is unclear or inconsistent.
         </p>
         <p style="margin:0.5em 0;">
-          <span style="display:inline-block;background:#f44336;color:white;padding:0.25em 0.75em;border-radius:0.25em;margin-right:0.5em;font-size:0.9em;font-weight:bold;">✗ Unlikely cause</span> (score &lt; -20%): This item rarely precedes your target—unlikely to be responsible.
+          <span style="display:inline-block;background:#f44336;color:white;padding:0.25em 0.75em;border-radius:0.25em;margin-right:0.5em;font-size:0.9em;font-weight:bold;">✗ Unlikely cause</span> (score &lt; -20%): This item rarely (or never) precedes your target—unlikely to be responsible.
         </p>
         <p style="margin:0.5em 0;color:#666;"><strong>Tip:</strong> Click "View occurrences" under each result to see specific timestamps and timing details for deeper analysis.</p>
       </div>
