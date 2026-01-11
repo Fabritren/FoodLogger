@@ -281,6 +281,11 @@ function drawPlot(data) {
   const minX = Math.min(...xValues);
   const maxX = Math.max(...xValues);
 
+  // Determine min and max Y for the current dataset
+  const yValues = rects.flatMap(r => [r.yStart, r.yEnd]);
+  const minY = Math.min(...yValues);
+  const maxY = Math.max(...yValues);
+
   // Detect touch-capable devices and enable wheel zoom only on non-touch devices
   const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 0);
   const wheelEnabled = !isTouchDevice;
@@ -359,10 +364,10 @@ function drawPlot(data) {
           },
         },
         y: {
-          min: 0,
-          max: 24,
+          min: Math.max(0, Math.floor(minY)),
+          max: Math.min(24, Math.ceil(maxY)),
           title: { display: true, text: 'Hour of day' },
-          ticks: { stepSize: 2 }
+          ticks: { stepSize: 1 }
         }
       },
       plugins: {
