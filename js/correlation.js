@@ -94,80 +94,80 @@ function performCorrelationAnalysis(rawEntries, targetType, targetValue, timefra
 
   console.log('[performCorrelationAnalysis] found', targetOccurrences.length, 'target occurrences');
 
-  // For each target occurrence, analyze preceding and following items
-  const correlationMap = {}; // item -> { positive: count, negative: count, neutral: count }
+  // Build correlation map using "closest target" approach
+  // For each non-target item, correlate it only to its closest target occurrence
+  const correlationMap = {}; // item -> { positive: count, negative: count, neutral: count, occurrences: [] }
 
   const lookbackMs = timeframeHours * 60 * 60 * 1000;
-  const thresholdHours = Math.min(3, timeframeHours / 2); // 3 hours or half the timeframe, whichever is smaller
+  const thresholdHours = Math.min(3, timeframeHours / 2);
   const thresholdMs = thresholdHours * 60 * 60 * 1000;
 
-  targetOccurrences.forEach(occurrence => {
-    const { index, item, allItems } = occurrence;
-    const timeOfTarget = item.time;
+  // Extract all non-target items with their times
+  const targetIndices = new Set(targetOccurrences.map(t => t.index));
+  const nonTargetItems = allItems
+    .map((item, idx) => ({ item, idx }))
+    .filter(({ idx }) => !targetIndices.has(idx));
 
-    // Look at preceding items (items before target, potential causes)
-    for (let i = index - 1; i >= 0; i--) {
-      const precedingItem = allItems[i];
-      const timeDiff = timeOfTarget - precedingItem.time;
+  // For each non-target item, find closest target and score relative to it
+  nonTargetItems.forEach(({ item, idx }) => {
+    // Find closest target occurrence (by time distance)
+    let closestTarget = null;
+    let minTimeDiff = Infinity;
 
-      // Only consider items in lookback window
-      if (timeDiff > lookbackMs) break;
-
-      const precedingText = precedingItem.text;
-      if (!correlationMap[precedingText]) {
-        correlationMap[precedingText] = { positive: 0, negative: 0, neutral: 0, occurrences: [] };
-      }
-
-      const minutesDiff = timeDiff / (60 * 1000);
-      
-      // If item is within threshold time before target, mark as potential cause (positive)
-      if (timeDiff <= thresholdMs) {
-        correlationMap[precedingText].positive++;
-        correlationMap[precedingText].occurrences.push({
-          time: precedingItem.time,
-          minutesBefore: Math.round(minutesDiff),
-          type: 'positive'
-        });
-      } else {
-        // If between threshold and full lookback, mark as weak correlation (neutral)
-        correlationMap[precedingText].neutral++;
-        correlationMap[precedingText].occurrences.push({
-          time: precedingItem.time,
-          minutesBefore: Math.round(minutesDiff),
-          type: 'neutral'
-        });
-      }
-    }
-
-    // Look at following items (items after target) to detect false positive
-    const followingItems = [];
-    for (let i = index + 1; i < allItems.length; i++) {
-      const followingItem = allItems[i];
-      const timeDiff = followingItem.time - timeOfTarget;
-      
-      // Only look ahead same timeframe as lookback
-      if (timeDiff > lookbackMs) break;
-      followingItems.push({ item: followingItem, timeDiff });
-    }
-
-    // Mark items eaten after symptom as negative correlation (didn't cause it)
-    followingItems.forEach(fItem => {
-      const itemText = fItem.item.text;
-      if (!correlationMap[itemText]) {
-        correlationMap[itemText] = { positive: 0, negative: 0, neutral: 0, occurrences: [] };
-      }
-      
-      // If same food was eaten after symptom without helping/worsening, it's negative
-      const minutesAfter = fItem.timeDiff / (60 * 1000);
-      if (minutesAfter <= thresholdMs) {
-        correlationMap[itemText].negative++;
-        correlationMap[itemText].occurrences.push({
-          time: fItem.item.time,
-          minutesAfter: Math.round(minutesAfter),
-          type: 'negative'
-        });
+    targetOccurrences.forEach(target => {
+      const timeDiff = Math.abs(target.item.time - item.time);
+      if (timeDiff < minTimeDiff) {
+        minTimeDiff = timeDiff;
+        closestTarget = target;
       }
     });
+
+    if (!closestTarget || minTimeDiff > lookbackMs) {
+      return; // Item is outside lookback window for all targets
+    }
+
+    const itemText = item.text;
+    if (!correlationMap[itemText]) {
+      correlationMap[itemText] = { positive: 0, negative: 0, neutral: 0, occurrences: [] };
+    }
+
+    const timeDiff = closestTarget.item.time - item.time; // positive if item is before target
+    const minutesDiff = timeDiff / (60 * 1000);
+
+    // Determine correlation type based on timing relative to closest target
+    if (timeDiff > 0 && timeDiff <= thresholdMs) {
+      // Item appears before target within threshold → likely cause
+      correlationMap[itemText].positive++;
+      correlationMap[itemText].occurrences.push({
+        time: item.time,
+        minutesBefore: Math.round(minutesDiff),
+        type: 'positive'
+      });
+    } else if (timeDiff > thresholdMs && timeDiff <= lookbackMs) {
+      // Item appears before target but beyond threshold → weak correlation
+      correlationMap[itemText].neutral++;
+      correlationMap[itemText].occurrences.push({
+        time: item.time,
+        minutesBefore: Math.round(minutesDiff),
+        type: 'neutral'
+      });
+    } else if (timeDiff < 0 && Math.abs(timeDiff) <= thresholdMs) {
+      // Item appears after target within threshold → ate after, cannot cause
+      correlationMap[itemText].negative++;
+      correlationMap[itemText].occurrences.push({
+        time: item.time,
+        minutesAfter: Math.round(Math.abs(minutesDiff)),
+        type: 'negative'
+      });
+    } else if (timeDiff < 0 && Math.abs(timeDiff) <= lookbackMs) {
+      // Item appears after target beyond threshold → still cannot cause, mark negative
+      correlationMap[itemText].negative++;
+      correlationMap[itemText].occurrences.push({
+        time: item.time,
+        minutesAfter: Math.round(Math.abs(minutesDiff)),
+        type: 'negative'
+      });
+    }
   });
 
   // Calculate correlation strength for each item
