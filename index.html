@@ -190,21 +190,21 @@
 <div id="categoryModal" class="modal">
   <div class="modal-content">
     <div class="modal-header">
-      <h2>Manage Category</h2>
+      <h3 style="margin:0;">Manage Category</h3>
       <button class="modal-close" onclick="closeCategoryModal()">×</button>
     </div>
     <form id="categoryForm" class="modal-form-layout" onsubmit="event.preventDefault(); saveCategoryForm();">
       <div class="modal-form-top">
-        <label>Category Name</label>
-        <input type="text" id="categoryName" placeholder="e.g., Breakfast" required>
-        
-        <label>Color</label>
-        <div style="display:flex; gap:0.5rem; align-items:center;">
-          <input type="color" id="categoryColor" value="#FF6B6B">
+        <div style="display:flex;gap:0.75em;align-items:flex-end;">
+          <div style="display:flex;flex-direction:column;gap:0.5em;">
+            <label for="categoryColor" style="font-size:0.9em;">Color</label>
+            <input type="color" id="categoryColor" value="#FF6B6B" style="width:60px;height:44px;cursor:pointer;border:1px solid #ccc;border-radius:0.25em;">
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:0.5em;">
+            <label for="categoryName">Category Name</label>
+            <input type="text" id="categoryName" placeholder="e.g., Breakfast" required>
+          </div>
         </div>
-        
-        <label>Search items</label>
-        <input type="text" id="categoryItemSearch" placeholder="Search items…" oninput="filterCategoryItems()">
       </div>
 
       <div style="display:flex;flex-direction:column;gap:0.5em;margin-bottom:0.5em;">
@@ -216,6 +216,9 @@
           <span id="selectionStatus" style="font-size:0.85em;color:#666;margin-left:auto;">0/0 selected</span>
         </div>
       </div>
+
+      <input type="text" id="categoryItemSearch" placeholder="Search items…" style="width:100%;padding:0.5em;border:1px solid #ccc;border-radius:0.25em;font-size:0.9em;margin-bottom:0.5em;" oninput="filterCategoryItems()">
+
       <div id="categoryItemsCheckboxes" class="items-checkboxes"></div>
       
       <div class="modal-buttons">
