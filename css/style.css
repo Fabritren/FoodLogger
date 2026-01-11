@@ -224,9 +224,10 @@ footer {
 #panel-plot canvas,
 #chart-wrapper canvas {
   width: 100% !important;
-  height: 100% !important;
-  max-height: 100dvh;
+  height: 80% !important;
+  max-height: 80dvh;
   display: block;
+  padding-top:20px;
 }
 
 #chart-wrapper.maximized {
