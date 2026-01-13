@@ -105,6 +105,8 @@ Five mutually-exclusive panels: `panel-plot`, `panel-data`, `panel-categories`, 
 - NFD-normalized substring matching
 - Debounced input (250ms) to avoid excessive updates
 - Edit/delete actions via buttons in action column
+- **Improveable items filter** (`filterByImproveableItems` flag): Highlights entries containing compound items (e.g., "Rice and beans" where both "Rice" and "Beans" exist as separate items), suggesting potential data cleanup via "📝" button in table controls
+- **Global state**: `filterByImproveableItems` (boolean flag for filtering), `searchInput` (search field)
 
 ### Correlation Analysis (`correlation.js`)
 - **Purpose**: Identify temporal patterns and correlations between items (e.g., which items appear near target items)
@@ -145,9 +147,10 @@ After any data modification (add, update, delete, import), always call `refresh(
 ## Integration Points
 
 - **indexedDB API**: Standard browser API for offline persistence. Database name: `logger-db`; object stores: `raw` (entries) and `categories` (category metadata).
-- **Chart.js Library**: Must be loaded before `plot.js`. Used for scatter plot rendering
+- **Chart.js Library**: Must be loaded before `plot.js`. Used for scatter plot rendering with zoom/pan plugins
 - **localStorage**: Not used; all data persists via IndexedDB
 - **Manifest**: Defines PWA metadata (name, theme color, display mode)
+- **Database Initialization**: `initDB()` called at app startup (in `app.js`); auto-populates an "Apple" entry if database is empty for demo purposes
 
 ## Common Workflows
 
@@ -199,6 +202,9 @@ Call `analyzeCorrelation()` in [correlation.js](../js/correlation.js) after user
    - Tallies positive/negative/neutral correlations with other items
 4. `displayCorrelationResults()` renders ranked list sorted by correlation strength
 5. Remember to call `onRefreshUpdateCorrelationSelect()` whenever `refresh()` completes to keep dropdown in sync
+
+### Data Quality: Detecting Improveable Items
+The "📝" button in table controls filters entries with compound items that could be split. `findItemsToImprove()` identifies items containing multiple other items as substrings (e.g., "rice and beans" when "rice" and "beans" exist separately). When filtering is active, only entries with improveable items display. This helps users normalize inconsistent comma-separated data entry.
 
 ## Notes for Agents
 
