@@ -183,8 +183,15 @@ function performCorrelationAnalysis(processedItems, targetType, targetValue, tim
     return scoreDiff !== 0 ? scoreDiff : a.item.localeCompare(b.item);
   });
 
+  // Extract target occurrence times for visualization
+  const targetOccurrenceTimes = targetOccurrences.map(t => ({
+    time: t.item.time,
+    timeMs: t.item.time.getTime()
+  }));
+
   return {
     targetOccurrences: targetOccurrences.length,
+    targetOccurrenceTimes: targetOccurrenceTimes,
     correlations: correlationScores,
     timeframeHours
   };
@@ -275,34 +282,41 @@ function displayCorrelationResults(results, targetType, targetValue, timeframeHo
         </div>
 
         <details style="font-size:0.85em;color:#666;">
-          <summary style="cursor:pointer;font-weight:bold;margin-bottom:0.5em;">View occurrences (${corr.total})</summary>
-          <div style="margin-top:0.5em;padding-left:1em;border-left:2px solid #ddd;">
-            ${corr.occurrences.map(occ => {
-              const timeStr = occ.time.toLocaleString();
-              const timing = occ.minutesBefore !== undefined 
-                ? `${formatTimingDifference(occ.minutesBefore)} before`
-                : `${formatTimingDifference(occ.minutesAfter)} after`;
-              
-              let bgColor, textColor, icon;
-              if (occ.type === 'positive') {
-                bgColor = '#4CAF50';
-                textColor = '#fff';
-                icon = '✓';
-              } else if (occ.type === 'negative') {
-                bgColor = '#f44336';
-                textColor = '#fff';
-                icon = '✗';
-              } else {
-                bgColor = '#FFC107';
-                textColor = '#000';
-                icon = '~';
-              }
-              
-              return `<div style="margin-bottom:0.5em;padding:0.5em;background:${bgColor};color:${textColor};border-radius:0.25em;display:flex;align-items:center;gap:0.5em;">
-                <span style="font-weight:bold;font-size:1.1em;">${icon}</span>
-                <span>${timeStr} (${timing})</span>
-              </div>`;
-            }).join('')}
+          <summary style="cursor:pointer;font-weight:bold;margin-bottom:0.5em;">Details (${corr.total} occurrences)</summary>
+          <div style="margin-top:1em;padding-left:1em;border-left:2px solid #ddd;">
+            <!-- Timeline visualization will be inserted here -->
+            <div id="timeline-${corr.item.replace(/\s+/g, '-')}" style="margin-bottom:1.5em;background:#fafafa;padding:1em;border-radius:0.5em;overflow-x:auto;"></div>
+            
+            <!-- Occurrences list -->
+            <div style="margin-top:1em;">
+              <h5 style="margin:0.5em 0;color:#666;">Occurrence details:</h5>
+              ${corr.occurrences.map(occ => {
+                const timeStr = occ.time.toLocaleString();
+                const timing = occ.minutesBefore !== undefined 
+                  ? `${formatTimingDifference(occ.minutesBefore)} before`
+                  : `${formatTimingDifference(occ.minutesAfter)} after`;
+                
+                let bgColor, textColor, icon;
+                if (occ.type === 'positive') {
+                  bgColor = '#4CAF50';
+                  textColor = '#fff';
+                  icon = '✓';
+                } else if (occ.type === 'negative') {
+                  bgColor = '#f44336';
+                  textColor = '#fff';
+                  icon = '✗';
+                } else {
+                  bgColor = '#FFC107';
+                  textColor = '#000';
+                  icon = '~';
+                }
+                
+                return `<div style="margin-bottom:0.5em;padding:0.5em;background:${bgColor};color:${textColor};border-radius:0.25em;display:flex;align-items:center;gap:0.5em;">
+                  <span style="font-weight:bold;font-size:1.1em;">${icon}</span>
+                  <span>${timeStr} (${timing})</span>
+                </div>`;
+              }).join('')}
+            </div>
           </div>
         </details>
       </div>
@@ -311,6 +325,189 @@ function displayCorrelationResults(results, targetType, targetValue, timeframeHo
 
   html += '</div>';
   resultsDiv.innerHTML = html;
+  
+  // Render timelines for each correlated item after DOM is updated
+  setTimeout(() => {
+    results.correlations.forEach(corr => {
+      const timelineId = `timeline-${corr.item.replace(/\s+/g, '-')}`;
+      const timelineContainer = document.getElementById(timelineId);
+      if (timelineContainer) {
+        renderCorrelationTimeline(timelineContainer, corr, displayName, results.targetOccurrenceTimes);
+      }
+    });
+  }, 0);
+}
+
+function renderCorrelationTimeline(container, correlationData, targetName, targetOccurrenceTimes) {
+  console.log('[renderCorrelationTimeline] rendering timeline for', correlationData.item);
+  
+  if (!correlationData.occurrences || correlationData.occurrences.length === 0) {
+    container.innerHTML = '<p style="color:#999;">No occurrences to visualize.</p>';
+    return;
+  }
+
+  // Prepare correlated occurrences
+  const correlatedOccurrences = correlationData.occurrences.map(occ => ({
+    ...occ,
+    timeMs: new Date(occ.time).getTime()
+  }));
+
+  // Prepare target occurrences
+  const targetOccurrences = (targetOccurrenceTimes || []).map(occ => ({
+    ...occ
+  }));
+
+  // Combine all times to calculate scale
+  const allTimes = [
+    ...correlatedOccurrences.map(o => o.timeMs),
+    ...targetOccurrences.map(o => o.timeMs)
+  ];
+
+  const minTime = Math.min(...allTimes);
+  const maxTime = Math.max(...allTimes);
+  const timeRange = maxTime - minTime;
+  const padding = timeRange * 0.1 || 1000 * 60 * 60; // 10% padding or 1 hour
+
+  // SVG dimensions
+  const svgWidth = 800;
+  const margin = 50;
+  const chartWidth = svgWidth - 2 * margin;
+  
+  // Time scale (shared between rows)
+  const timeScaleStart = minTime - padding;
+  const timeScaleEnd = maxTime + padding;
+  const timeScaleRange = timeScaleEnd - timeScaleStart;
+
+  // Color scheme
+  const positiveColor = '#4CAF50';
+  const negativeColor = '#f44336';
+  const neutralColor = '#FFC107';
+  const targetColor = '#2196F3';
+
+  // Block dimensions
+  const blockWidth = 16;
+  const blockHeight = 24;
+  
+  // Two-row layout
+  const rowHeight = 80;
+  const titleY = 25;
+  const targetRowY = 80;
+  const correlatedRowY = targetRowY + rowHeight;
+  const timelineAxisY = correlatedRowY + 40;
+  const svgHeight = timelineAxisY + 60;
+
+  let svg = `<svg width="100%" height="${svgHeight}" viewBox="0 0 ${svgWidth} ${svgHeight}" style="border:1px solid #ddd;border-radius:0.5em;">`;
+
+  // Background
+  svg += `<rect width="${svgWidth}" height="${svgHeight}" fill="#fff" rx="0.5em"/>`;
+
+  // Add titles for rows
+  svg += `<text x="${margin}" y="${titleY}" font-size="12" fill="${targetColor}" font-weight="bold">${targetName}</text>`;
+  svg += `<text x="${margin}" y="${correlatedRowY + 30}" font-size="12" fill="#000" font-weight="bold">${correlationData.item}</text>`;
+
+  // Draw horizontal separators for rows
+  svg += `<line x1="${margin}" y1="${targetRowY}" x2="${svgWidth - margin}" y2="${targetRowY}" stroke="#e0e0e0" stroke-width="1"/>`;
+  svg += `<line x1="${margin}" y1="${correlatedRowY}" x2="${svgWidth - margin}" y2="${correlatedRowY}" stroke="#e0e0e0" stroke-width="1"/>`;
+
+  // Draw time axis
+  svg += `<line x1="${margin}" y1="${timelineAxisY}" x2="${svgWidth - margin}" y2="${timelineAxisY}" stroke="#ccc" stroke-width="2"/>`;
+
+  // Add time labels on axis
+  const numTicks = 5;
+  for (let i = 0; i <= numTicks; i++) {
+    const ratio = i / numTicks;
+    const x = margin + ratio * chartWidth;
+    const timeValue = timeScaleStart + ratio * timeScaleRange;
+    const date = new Date(timeValue);
+    const timeLabel = date.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    
+    svg += `<line x1="${x}" y1="${timelineAxisY - 5}" x2="${x}" y2="${timelineAxisY + 5}" stroke="#999" stroke-width="1"/>`;
+    svg += `<text x="${x}" y="${timelineAxisY + 22}" text-anchor="middle" font-size="11" fill="#666">${timeLabel}</text>`;
+  }
+
+  // Plot target occurrences
+  targetOccurrences.forEach(occ => {
+    const xPos = margin + ((occ.timeMs - timeScaleStart) / timeScaleRange) * chartWidth;
+    svg += `<rect x="${xPos - blockWidth / 2}" y="${targetRowY - blockHeight / 2}" width="${blockWidth}" height="${blockHeight}" fill="${targetColor}" stroke="white" stroke-width="2" rx="2"/>`;
+  });
+
+  // Track text positions to avoid overlap
+  const textPositions = [];
+  const textRowHeight = 15;
+
+  // Plot correlated occurrences and draw connection lines
+  correlatedOccurrences.forEach(occ => {
+    const xCorr = margin + ((occ.timeMs - timeScaleStart) / timeScaleRange) * chartWidth;
+    
+    // Draw block for correlated item
+    let blockColor = occ.type === 'positive' ? positiveColor : occ.type === 'negative' ? negativeColor : neutralColor;
+    svg += `<rect x="${xCorr - blockWidth / 2}" y="${correlatedRowY - blockHeight / 2}" width="${blockWidth}" height="${blockHeight}" fill="${blockColor}" stroke="white" stroke-width="2" rx="2"/>`;
+
+    // Find closest target occurrence and draw connection line
+    if (targetOccurrences.length > 0) {
+      let closestTarget = null;
+      let minDiff = Infinity;
+      
+      targetOccurrences.forEach(target => {
+        const diff = Math.abs(target.timeMs - occ.timeMs);
+        if (diff < minDiff) {
+          minDiff = diff;
+          closestTarget = target;
+        }
+      });
+
+      if (closestTarget) {
+        const xTarget = margin + ((closestTarget.timeMs - timeScaleStart) / timeScaleRange) * chartWidth;
+        const centerTargetY = targetRowY;
+        const centerCorrY = correlatedRowY;
+
+        // Determine line color based on correlation type
+        let lineColor = occ.type === 'positive' ? positiveColor : occ.type === 'negative' ? negativeColor : neutralColor;
+        
+        // Draw connection line
+        svg += `<line x1="${xTarget}" y1="${centerTargetY}" x2="${xCorr}" y2="${centerCorrY}" stroke="${lineColor}" stroke-width="2" opacity="0.6"/>`;
+
+        // Add timing text on the connection line with smart positioning
+        let timingText = '';
+        if (occ.minutesBefore !== undefined) {
+          timingText = formatTimingDifference(occ.minutesBefore);
+        } else if (occ.minutesAfter !== undefined) {
+          timingText = formatTimingDifference(occ.minutesAfter);
+        }
+
+        if (timingText) {
+          const midX = (xTarget + xCorr) / 2;
+          const midY = (centerTargetY + centerCorrY) / 2;
+          
+          // Find a good vertical position to avoid overlap
+          let textY = midY - 5;
+          let rowOffset = 0;
+          
+          // Check if this x position already has text
+          for (const pos of textPositions) {
+            if (Math.abs(pos.x - midX) < 40) { // if within 40px horizontally
+              rowOffset++;
+            }
+          }
+          
+          // Alternate above and below the line
+          if (rowOffset % 2 === 0) {
+            textY = midY - 5 - (Math.floor(rowOffset / 2) * textRowHeight);
+          } else {
+            textY = midY + 5 + (Math.floor((rowOffset - 1) / 2) * textRowHeight);
+          }
+          
+          textPositions.push({ x: midX, y: textY });
+          
+          svg += `<text x="${midX}" y="${textY}" text-anchor="middle" font-size="9" fill="${lineColor}" font-weight="bold">${timingText}</text>`;
+        }
+      }
+    }
+  });
+
+  svg += '</svg>';
+  
+  container.innerHTML = svg;
 }
 
 // Update select dropdown when data changes
