@@ -97,6 +97,27 @@
         <button class="primary" onclick="analyzeCorrelation()">Analyze Correlation</button>
       </div>
 
+      <div style="margin-top:1em;padding:1em;background:#f5f5f5;border-radius:0.5em;border:1px solid #ddd;">
+        <h4 style="margin:0 0 1em 0;color:#1976D2;">Correlation Gains</h4>
+        <div style="display:flex;gap:1em;flex-wrap:wrap;">
+          <div style="display:flex;flex-direction:column;gap:0.5em;flex:1;min-width:150px;">
+            <label for="gainPositive" style="font-weight:bold;">Positive Gain</label>
+            <small style="color:#666;">Weight for items before target</small>
+            <input type="number" id="gainPositive" value="1" oninput="analyzeCorrelation()" style="padding:0.5em;border:1px solid #ccc;border-radius:0.25em;font-size:0.9em;">
+          </div>
+          <div style="display:flex;flex-direction:column;gap:0.5em;flex:1;min-width:150px;">
+            <label for="gainNegative" style="font-weight:bold;">Negative Gain</label>
+            <small style="color:#666;">Weight for items after target</small>
+            <input type="number" id="gainNegative" value="-5" oninput="analyzeCorrelation()" style="padding:0.5em;border:1px solid #ccc;border-radius:0.25em;font-size:0.9em;">
+          </div>
+          <div style="display:flex;flex-direction:column;gap:0.5em;flex:1;min-width:150px;">
+            <label for="gainIsolated" style="font-weight:bold;">Isolated Target Gain</label>
+            <small style="color:#666;">Weight for unexplained targets</small>
+            <input type="number" id="gainIsolated" value="-2" oninput="analyzeCorrelation()" style="padding:0.5em;border:1px solid #ccc;border-radius:0.25em;font-size:0.9em;">
+          </div>
+        </div>
+      </div>
+
       <div id="correlationResults" style="margin-top:1em;"></div>
 
       <!-- Correlation Explanation -->
@@ -109,26 +130,33 @@
         <ol style="margin:0.5em 0;padding-left:1.5em;">
           <li><strong>Find all occurrences:</strong> The algorithm finds every instance of your selected item or category in the database.</li>
           <li><strong>Single correlation per item:</strong> Each item in your data is evaluated relative to its <strong>closest target occurrence</strong> (by time distance). This prevents items between close target occurrences from being double-counted.</li>
-          <li><strong>Score based on timing:</strong> Items are scored according to their timing relative to their nearest target:
+          <li><strong>Classify by timing:</strong> Items are classified according to their timing relative to their nearest target:
             <ul style="margin:0.5em 0;padding-left:1.5em;">
-              <li><strong>Positive correlation:</strong> Items appearing <strong>before</strong> the target within ~3 hours (or half the timeframe)—likely contributing factors.</li>
-              <li><strong>Neutral correlation:</strong> Items appearing <strong>before</strong> the target but beyond the threshold—weak or indirect relationships.</li>
-              <li><strong>Negative correlation:</strong> Items appearing <strong>after</strong> the target (any distance within lookback)—cannot be causes, so they lower the correlation score.</li>
+              <li><strong>Positive correlation:</strong> Items appearing <strong>before</strong> the target—likely contributing factors.</li>
+              <li><strong>Negative correlation:</strong> Items appearing <strong>after</strong> the target—cannot be direct causes.</li>
+              <li><strong>Isolated targets:</strong> Target occurrences that this item does not explain (those where another item is closer).</li>
             </ul>
           </li>
-          <li><strong>Rank results:</strong> Items are ranked by a correlation score from -1 (unlikely cause) to +1 (likely cause), calculated as: <code style="background:#e0e0e0;padding:0.2em 0.4em;border-radius:0.25em;font-family:monospace;">positive_ratio - negative_ratio</code></li>
+          <li><strong>Calculate correlation score:</strong> Each item is scored using the weighted counts and user-defined gains:
+            <ul style="margin:0.5em 0;padding-left:1.5em;">
+              <li><strong>Positive weight:</strong> Count of occurrences before target × Positive Gain</li>
+              <li><strong>Negative weight:</strong> Count of occurrences after target × Negative Gain (typically negative to penalize after-occurrences)</li>
+              <li><strong>Isolated weight:</strong> Count of unexplained targets × Isolated Target Gain (weight for targets this item doesn't explain)</li>
+            </ul>
+            <p style="margin:0.5em 0 0 0;">The score is calculated as: <code style="background:#f0f0f0;padding:0.2em 0.4em;border-radius:0.2em;">Score = (positiveWeight + negativeWeight + isolatedWeight) / totalCount</code>, where <code style="background:#f0f0f0;padding:0.2em 0.4em;border-radius:0.2em;">totalCount</code> is the sum of counts weighted by the absolute values of their corresponding gains: <code style="background:#f0f0f0;padding:0.2em 0.4em;border-radius:0.2em;">totalCount = positive × |gainPositive| + negative × |gainNegative| + isolated × |gainIsolated|</code>. This ensures proper normalization regardless of gain magnitude. Higher (more positive) scores indicate likely causes; lower (more negative) scores indicate unlikely causes.</p>
+          </li>
         </ol>
         <h4 style="margin:1em 0 0.5em 0;color:#1976D2;">Result Interpretation</h4>
         <p style="margin:0.5em 0;">
-          <span style="display:inline-block;background:#4CAF50;color:white;padding:0.25em 0.75em;border-radius:0.25em;margin-right:0.5em;font-size:0.9em;font-weight:bold;">✓ Likely cause</span> (score &gt; 20%): This item frequently precedes your target—may be a contributing factor.
+          <span style="display:inline-block;background:#4CAF50;color:white;padding:0.25em 0.75em;border-radius:0.25em;margin-right:0.5em;font-size:0.9em;font-weight:bold;">✓ Likely cause</span> (score &gt; 10%): This item frequently precedes your target—likely a contributing factor.
         </p>
         <p style="margin:0.5em 0;">
-          <span style="display:inline-block;background:#FFC107;color:#000;padding:0.25em 0.75em;border-radius:0.25em;margin-right:0.5em;font-size:0.9em;font-weight:bold;">~ Neutral</span> (score ≈ 0-20%): Mixed correlation—relationship is unclear or inconsistent.
+          <span style="display:inline-block;background:#FFC107;color:#000;padding:0.25em 0.75em;border-radius:0.25em;margin-right:0.5em;font-size:0.9em;font-weight:bold;">~ Neutral</span> (score between -10% and 10%): Mixed correlation—items appear both before and after your target with similar frequency.
         </p>
         <p style="margin:0.5em 0;">
-          <span style="display:inline-block;background:#f44336;color:white;padding:0.25em 0.75em;border-radius:0.25em;margin-right:0.5em;font-size:0.9em;font-weight:bold;">✗ Unlikely cause</span> (score &lt; -20%): This item rarely (or never) precedes your target—unlikely to be responsible.
+          <span style="display:inline-block;background:#f44336;color:white;padding:0.25em 0.75em;border-radius:0.25em;margin-right:0.5em;font-size:0.9em;font-weight:bold;">✗ Unlikely cause</span> (score &lt; -10%): This item primarily appears after your target—unlikely to be a cause.
         </p>
-        <p style="margin:0.5em 0;color:#666;"><strong>Tip:</strong> Click "View occurrences" under each result to see specific timestamps and timing details for deeper analysis.</p>
+        <p style="margin:0.5em 0;color:#666;"><strong>Tip:</strong> Click "Details" under each result to see specific timestamps and timing relationships for deeper analysis.</p>
       </div>
     </div>
   </section>

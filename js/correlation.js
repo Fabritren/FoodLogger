@@ -46,13 +46,18 @@ function analyzeCorrelation() {
 
   console.log('[analyzeCorrelation] analyzing', targetType, ':', targetItem, 'with', timeframeHours, 'hour lookback');
 
+  // Get user-defined gains
+  const gainPositive = parseFloat(document.getElementById('gainPositive')?.value || 1);
+  const gainNegative = parseFloat(document.getElementById('gainNegative')?.value || -5);
+  const gainIsolated = parseFloat(document.getElementById('gainIsolated')?.value || 0);
+
   // Use processedTable which is already split, capitalized, and normalized
-  const results = performCorrelationAnalysis(processedTable, targetType, targetItem, timeframeHours);
+  const results = performCorrelationAnalysis(processedTable, targetType, targetItem, timeframeHours, gainPositive, gainNegative, gainIsolated);
   displayCorrelationResults(results, targetType, targetItem, timeframeHours);
 }
 
-function performCorrelationAnalysis(processedItems, targetType, targetValue, timeframeHours = 24) {
-  console.log('[performCorrelationAnalysis] analyzing', processedItems.length, 'items with', timeframeHours, 'hour lookback');
+function performCorrelationAnalysis(processedItems, targetType, targetValue, timeframeHours = 24, gainPositive = 1, gainNegative = -5, gainIsolated = 0) {
+  console.log('[performCorrelationAnalysis] analyzing', processedItems.length, 'items with', timeframeHours, 'hour lookback', 'gains:', { gainPositive, gainNegative, gainIsolated });
 
   // processedItems is already split, capitalized, and processed from buildProcessed()
   const allItems = processedItems.map(item => ({
@@ -84,11 +89,12 @@ function performCorrelationAnalysis(processedItems, targetType, targetValue, tim
 
   // Build correlation map using "closest target" approach
   // For each non-target item, correlate it only to its closest target occurrence
-  const correlationMap = {}; // item -> { positive: count, negative: count, neutral: count, occurrences: [] }
+  const correlationMap = {}; // item -> { positive: count, negative: count, occurrences: [], targetsCovered: Set }
 
   const lookbackMs = timeframeHours * 60 * 60 * 1000;
-  const thresholdHours = Math.min(3, timeframeHours / 2);
-  const thresholdMs = thresholdHours * 60 * 60 * 1000;
+  
+  // Track which targets are covered by each item
+  const targetsCoveredByItem = {}; // item name -> Set of target indices
 
   // Extract all non-target items with their times
   const targetIndices = new Set(targetOccurrences.map(t => t.index));
@@ -116,39 +122,26 @@ function performCorrelationAnalysis(processedItems, targetType, targetValue, tim
 
     const itemText = item.text;
     if (!correlationMap[itemText]) {
-      correlationMap[itemText] = { positive: 0, negative: 0, neutral: 0, occurrences: [] };
+      correlationMap[itemText] = { positive: 0, negative: 0, occurrences: [] };
+      targetsCoveredByItem[itemText] = new Set();
     }
 
     const timeDiff = closestTarget.item.time - item.time; // positive if item is before target
     const minutesDiff = timeDiff / (60 * 1000);
 
     // Determine correlation type based on timing relative to closest target
-    if (timeDiff >= 0 && timeDiff <= thresholdMs) {
-      // Item appears before or at same time as target within threshold → likely cause
+    if (timeDiff >= 0) {
+      // Item appears before or at same time as target → positive correlation
       correlationMap[itemText].positive++;
       correlationMap[itemText].occurrences.push({
         time: item.time,
         minutesBefore: Math.round(minutesDiff),
         type: 'positive'
       });
-    } else if (timeDiff > thresholdMs && timeDiff <= lookbackMs) {
-      // Item appears before target but beyond threshold → weak correlation
-      correlationMap[itemText].neutral++;
-      correlationMap[itemText].occurrences.push({
-        time: item.time,
-        minutesBefore: Math.round(minutesDiff),
-        type: 'neutral'
-      });
-    } else if (timeDiff < 0 && Math.abs(timeDiff) <= thresholdMs) {
-      // Item appears after target within threshold → ate after, cannot cause
-      correlationMap[itemText].negative++;
-      correlationMap[itemText].occurrences.push({
-        time: item.time,
-        minutesAfter: Math.round(Math.abs(minutesDiff)),
-        type: 'negative'
-      });
-    } else if (timeDiff < 0 && Math.abs(timeDiff) <= lookbackMs) {
-      // Item appears after target beyond threshold → still cannot cause, mark negative
+      // Track that this item covers this target
+      targetsCoveredByItem[itemText].add(closestTarget.index);
+    } else if (timeDiff < 0) {
+      // Item appears after target → negative correlation (with 5x weight)
       correlationMap[itemText].negative++;
       correlationMap[itemText].occurrences.push({
         time: item.time,
@@ -160,18 +153,37 @@ function performCorrelationAnalysis(processedItems, targetType, targetValue, tim
 
   // Calculate correlation strength for each item
   const correlationScores = [];
+  
   Object.entries(correlationMap).forEach(([itemName, counts]) => {
-    const total = counts.positive + counts.negative + counts.neutral;
-    const positiveRatio = counts.positive / total;
-    const negativeRatio = counts.negative / total;
-    const score = positiveRatio - negativeRatio; // -1 to 1, positive = likely cause
-
+    // Calculate isolated targets for THIS item: how many targets this item doesn't explain
+    const isolatedTargetCount = targetOccurrences.length - targetsCoveredByItem[itemName].size;
+    
+    // Apply user-defined gains to correlations and isolated targets
+    const weightedPositive = counts.positive * gainPositive;
+    const weightedNegative = counts.negative * gainNegative;
+    const weightedIsolatedTargets = isolatedTargetCount * gainIsolated;
+    
+    // Sum weighted contributions and divide by total count
+    const sumWeighted = weightedPositive + weightedNegative + weightedIsolatedTargets;
+    
+    // Calculate totalCount using absolute values of gains for proper normalization
+    let totalCount = 0;
+    if (gainPositive !== 0) totalCount += counts.positive * Math.abs(gainPositive);
+    if (gainNegative !== 0) totalCount += counts.negative * Math.abs(gainNegative);
+    if (gainIsolated !== 0) totalCount += isolatedTargetCount * Math.abs(gainIsolated);
+    
+    // Avoid division by zero
+    let score = 0;
+    if (totalCount > 0) {
+      score = sumWeighted / totalCount;
+    }
+    
     correlationScores.push({
       item: itemName,
       positiveCount: counts.positive,
       negativeCount: counts.negative,
-      neutralCount: counts.neutral,
-      total,
+      isolatedTargetCount: isolatedTargetCount,
+      total: counts.positive + counts.negative, // actual count (not weighted)
       score,
       occurrences: counts.occurrences
     });
@@ -223,12 +235,18 @@ function displayCorrelationResults(results, targetType, targetValue, timeframeHo
     timeframeDisplay = `${days}d ${hours}h`;
   }
 
+  // Get current gains
+  const gainPositive = parseFloat(document.getElementById('gainPositive')?.value || 1);
+  const gainNegative = parseFloat(document.getElementById('gainNegative')?.value || -5);
+  const gainIsolated = parseFloat(document.getElementById('gainIsolated')?.value || 0);
+
   let html = `
     <div style="background:#f5f5f5;padding:1em;border-radius:0.5em;margin-bottom:1em;">
       <h3 style="margin:0 0 0.5em 0;">📊 Analysis Results</h3>
       <p style="margin:0.25em 0;color:#666;"><strong>Target:</strong> ${displayName}</p>
       <p style="margin:0.25em 0;color:#666;"><strong>Occurrences analyzed:</strong> ${results.targetOccurrences}</p>
       <p style="margin:0.25em 0;color:#666;"><strong>Lookback timeframe:</strong> ${timeframeDisplay}</p>
+      <p style="margin:0.25em 0;color:#666;"><strong>Gains:</strong> Positive: ${gainPositive}, Negative: ${gainNegative}, Isolated: ${gainIsolated}</p>
     </div>
   `;
 
@@ -246,11 +264,11 @@ function displayCorrelationResults(results, targetType, targetValue, timeframeHo
     if (isNaN(corr.score) || corr.total === 0) {
       scorePercent = '--';
       scoreColor = '#999';
-      scoreLabel = 'Outside timeframe';
+      scoreLabel = 'No data';
     } else {
       scorePercent = ((corr.score + 1) / 2 * 100).toFixed(0); // normalize -1..1 to 0..100
-      scoreColor = corr.score > 0.2 ? '#4CAF50' : corr.score < -0.2 ? '#f44336' : '#FFC107';
-      scoreLabel = corr.score > 0.2 ? 'Likely cause' : corr.score < -0.2 ? 'Unlikely cause' : 'Neutral';
+      scoreColor = corr.score > 0.1 ? '#4CAF50' : corr.score < -0.1 ? '#f44336' : '#FFC107';
+      scoreLabel = corr.score > 0.1 ? 'Likely cause' : corr.score < -0.1 ? 'Unlikely cause' : 'Neutral';
     }
 
     // Create a bar chart visualization
@@ -269,15 +287,11 @@ function displayCorrelationResults(results, targetType, targetValue, timeframeHo
         <div style="display:flex;gap:0.5em;margin-bottom:0.75em;font-size:0.85em;">
           <div style="flex:1;">
             <div style="background:#4CAF50;height:6px;width:${(corr.positiveCount/corr.total)*100}%;border-radius:3px;margin-bottom:0.25em;"></div>
-            <div style="color:#666;">✓ Positive: ${corr.positiveCount}</div>
-          </div>
-          <div style="flex:1;">
-            <div style="background:#FFC107;height:6px;width:${(corr.neutralCount/corr.total)*100}%;border-radius:3px;margin-bottom:0.25em;"></div>
-            <div style="color:#666;">~ Neutral: ${corr.neutralCount}</div>
+            <div style="color:#666;">✓ Before: ${corr.positiveCount}</div>
           </div>
           <div style="flex:1;">
             <div style="background:#f44336;height:6px;width:${(corr.negativeCount/corr.total)*100}%;border-radius:3px;margin-bottom:0.25em;"></div>
-            <div style="color:#666;">✗ Negative: ${corr.negativeCount}</div>
+            <div style="color:#666;">✗ After: ${corr.negativeCount}</div>
           </div>
         </div>
 
