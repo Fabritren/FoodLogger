@@ -219,13 +219,7 @@ function initDB(){
     dt.value=new Date().toISOString().slice(0,16);
     console.log('[openDB] dt set to', dt.value);
     
-    // Check if database is empty; if so, add a default "Apple" entry
     getAllRaw(raw => {
-      if (raw.length === 0) {
-        console.log('[openDB] database is empty, adding default entry');
-        const now = new Date().toISOString().slice(0,16);
-        addRaw({ time: now, text: 'Apple' });
-      }
       refresh();
       console.log('[openDB] initial refresh triggered');
     });
