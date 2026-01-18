@@ -211,6 +211,15 @@ function drawPlot(data) {
     myChart.destroy();
   }
 
+  // Handle empty data
+  if (!data || data.length === 0) {
+    console.log('[drawPlot] no data to plot, showing empty state');
+    const ctx = document.getElementById('plot');
+    myChart = null;
+    renderLegend({ data: { datasets: [] } });
+    return;
+  }
+
   // If showing categories and categories exist, transform data
   let plotData = data;
   let labelColorMap = {};
