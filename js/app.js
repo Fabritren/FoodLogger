@@ -117,21 +117,12 @@ function importData(input){
     // Add all entries first
     entries.forEach(e=>addRaw({time:e.time, text:e.text}));
     
-    // Add all categories and wait for them to complete
+    // Add all categories using db.js function
     const categoryPromises = cats.map(c => {
       return new Promise(resolve => {
-        const tx = db.transaction('categories', 'readwrite');
-        const store = tx.objectStore('categories');
-        const req = store.add({name: c.name, color: c.color, items: c.items || []});
-        
-        tx.oncomplete = () => {
-          console.log('[importData] category saved:', c.name);
-          resolve();
-        };
-        tx.onerror = () => {
-          console.error('[importData] error saving category:', c.name, tx.error);
-          resolve();
-        };
+        addCategory({name: c.name, color: c.color, items: c.items || []});
+        console.log('[importData] category saved:', c.name);
+        resolve();
       });
     });
 
