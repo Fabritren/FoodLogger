@@ -200,12 +200,7 @@ function deleteEntry(index) {
 }
 
 function editEntry(key) {
-  const tx = db.transaction('raw', 'readonly');
-  const store = tx.objectStore('raw');
-  const req = store.get(key);
-
-  req.onsuccess = e => {
-    const entry = e.target.result;
+  getRaw(key, entry => {
     if (!entry) return;
 
     // Store the key of the entry being edited
@@ -223,9 +218,7 @@ function editEntry(key) {
     document.querySelector('#panel-add .primary').innerText = 'Update';
     // show discard button
     document.getElementById('discardBtn').hidden = false;
-  };
-
-  req.onerror = e => console.error('editEntry: error fetching entry', e.target.error);
+  });
 }
 
 function discardEdit() {
