@@ -5,6 +5,7 @@ const clearBtn = document.getElementById('clearBtn');
 let filterByImproveableItems = false; // flag to track if filtering by improveable items
 
 function normalizeText(str) {
+  if (!str) return ''; // Handle undefined, null, or empty string
   return str.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
