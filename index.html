@@ -11,10 +11,7 @@
 
 <header class="topbar">
   <div class="left">
-    <button onclick="exportData()" title="Export">⬇️</button>
-    <button title="Import" onclick="this.querySelector('input').click()">
-      ⬆️<input type="file" hidden onchange="importData(this)">
-    </button>
+    <button onclick="showPanel('settings')" title="Settings">⚙️</button>
   </div>
   <div class="right">
     <button onclick="showPanel('plot')">📊</button>
@@ -26,6 +23,22 @@
 </header>
 
 <main class="panels">
+
+  <!-- SETTINGS PANEL -->
+  <section class="panel" id="panel-settings" hidden>
+    <!-- Manual Export/Import -->
+    <div style="padding:2rem;padding-top:1.5em;">
+      <div style="padding:1em;background:#f9f9f9;border-radius:0.5em;">
+        <h3 style="margin-top:0;">📁 Manual Backup</h3>
+        <div style="display:flex;gap:0.5em;flex-wrap:wrap;">
+          <button class="secondary" onclick="exportData()">Export to File</button>
+          <button class="secondary" onclick="document.getElementById('importFileInput').click()">Import from File</button>
+          <input type="file" id="importFileInput" hidden onchange="importData(this)">
+        </div>
+        <small style="display:block;margin-top:0.75em;color:#666;" id="backupNote">Use manual export to backup locally or transfer your data.</small>
+      </div>
+    </div>
+  </section>
 
   <!-- PLOT PANEL -->
   <section class="panel" id="panel-plot" hidden>
