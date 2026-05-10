@@ -71,9 +71,34 @@ body {
 .topbar {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   padding: 0.5rem;
   background: var(--card);
   border-bottom: 1px solid var(--border);
+  gap: 0.5rem;
+}
+
+.topbar .left {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.topbar .center {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  font-size: clamp(1rem, 4vw, 1.5rem);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--accent);
+}
+
+.topbar .right {
+  display: flex;
+  flex-shrink: 0;
+  gap: 0.25rem;
 }
 
 .topbar button {
