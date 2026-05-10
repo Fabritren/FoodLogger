@@ -141,7 +141,13 @@ function importData(input){
 function resetAllData(){
   console.log('[resetAllData] called');
   
-  if (!confirm('Are you sure you want to reset all data? This will delete all entries and categories. This action cannot be undone.')) {
+  const ok = confirm(
+    'Delete all data?\n\n' +
+    'This will permanently delete all entries and categories.\n\n' +
+    'This cannot be undone.'
+  );
+
+  if (!ok) {
     console.log('[resetAllData] user cancelled reset');
     return;
   }
