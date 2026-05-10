@@ -235,11 +235,24 @@
 </main>
 
 <footer id="appVersionFooter">
-  <div>Last update: 2026-05-10</div>
+  <div>Last update: <span id="lastUpdateDate">loading...</span></div>
   <div style="font-size:0.75em;color:#999;margin-top:0.5em;line-height:1.4;">
     All data is stored locally on your device only. No data is sent to any server or stored in the cloud.
   </div>
 </footer>
+
+<script>
+// Load last update date from file
+fetch('last-update.txt')
+  .then(response => response.text())
+  .then(date => {
+    document.getElementById('lastUpdateDate').textContent = date.trim();
+  })
+  .catch(error => {
+    console.log('Could not load last update date:', error);
+    document.getElementById('lastUpdateDate').textContent = 'unknown';
+  });
+</script>
 
 <!-- Category Modal -->
 <div id="categoryModal" class="modal">
