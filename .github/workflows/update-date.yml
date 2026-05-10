@@ -1,0 +1,51 @@
+name: Update Last Commit Date
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+jobs:
+  update-date:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get last commit date
+        id: date
+        run: |
+          LAST_COMMIT_DATE=$(git log -1 --format=%ci | cut -d' ' -f1)
+          echo "last_date=$LAST_COMMIT_DATE" >> $GITHUB_OUTPUT
+          echo "Last commit date: $LAST_COMMIT_DATE"
+
+      - name: Update last-update.txt
+        run: |
+          LAST_DATE=${{ steps.date.outputs.last_date }}
+          echo "$LAST_DATE" > last-update.txt
+          echo "Updated last-update.txt with date: $LAST_DATE"
+
+      - name: Check if changes were made
+        id: check
+        run: |
+          if git diff --quiet last-update.txt; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit and push if changed
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add last-update.txt
+          git commit -m "chore: update last commit date to ${{ steps.date.outputs.last_date }}"
+          git push
