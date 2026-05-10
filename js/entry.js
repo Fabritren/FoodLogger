@@ -117,6 +117,22 @@ function updateQuickTimeButtons() {
   
   container.innerHTML = '';
   
+  // Create "Day -" button
+  const dayBackBtn = document.createElement('button');
+  dayBackBtn.type = 'button';
+  dayBackBtn.innerText = 'Day -';
+  dayBackBtn.title = 'Previous day';
+  dayBackBtn.onclick = () => dayBack();
+  container.appendChild(dayBackBtn);
+  
+  // Create "Day +" button
+  const dayForwardBtn = document.createElement('button');
+  dayForwardBtn.type = 'button';
+  dayForwardBtn.innerText = 'Day +';
+  dayForwardBtn.title = 'Next day';
+  dayForwardBtn.onclick = () => dayForward();
+  container.appendChild(dayForwardBtn);
+  
   // Create "Now" button
   const nowBtn = document.createElement('button');
   nowBtn.type = 'button';
