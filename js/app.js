@@ -138,6 +138,26 @@ function importData(input){
   });
 }
 
+function resetAllData(){
+  console.log('[resetAllData] called');
+  
+  if (!confirm('Are you sure you want to reset all data? This will delete all entries and categories. This action cannot be undone.')) {
+    console.log('[resetAllData] user cancelled reset');
+    return;
+  }
+
+  // Clear both raw entries and categories
+  Promise.all([clearDB(), clearCategories()]).then(()=>{
+    console.log('[resetAllData] cleared raw and categories stores');
+    refresh();
+    console.log('[resetAllData] refresh triggered');
+    alert('All data has been reset successfully.');
+  }).catch(err=>{
+    console.error('[resetAllData] failed to reset data:', err);
+    alert('Failed to reset data. Please check the console for errors.');
+  });
+}
+
 function autoGrow(el) {
   el.style.height = "auto";
   el.style.height = el.scrollHeight + "px";
