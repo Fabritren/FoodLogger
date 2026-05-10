@@ -59,6 +59,7 @@ function refresh(){
     drawPlot(processedTable);
     console.log('[refresh] drawPlot called with processedTable.length =', processedTable.length);
     updateQuickButtons();
+    updateQuickTimeButtons();
     updateTable();
     updateCategoriesList();
     onRefreshUpdateCorrelationSelect();
